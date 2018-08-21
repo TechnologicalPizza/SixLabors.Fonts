@@ -85,11 +85,6 @@ namespace SixLabors.Fonts
 
         internal ushort GetGlyphIndex(int codePoint)
         {
-            if (codePoint > short.MaxValue)
-            {
-                throw new NotImplementedException("cmap table doesn't support 32-bit characters yet.");
-            }
-
             return this.cmap.GetGlyphId(codePoint);
         }
 

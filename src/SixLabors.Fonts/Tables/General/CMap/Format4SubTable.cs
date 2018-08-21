@@ -26,6 +26,10 @@ namespace SixLabors.Fonts.Tables.General.CMap
         {
             uint charAsInt = (uint)codePoint;
 
+            if(charAsInt > ushort.MaxValue){
+                return 0;
+            }
+
             foreach (Segment seg in this.Segments)
             {
                 if (seg.End >= charAsInt && seg.Start <= charAsInt)
