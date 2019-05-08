@@ -21,8 +21,9 @@ namespace SixLabors.Fonts
         /// </summary>
         /// <param name="text">The text.</param>
         /// <param name="options">The style.</param>
+        /// <param name="output">The layout output.</param>
         /// <returns>A collection of layout that describe all thats needed to measure or render a series of glyphs.</returns>
-        public List<GlyphLayout> GenerateLayout(ReadOnlySpan<char> text, RendererOptions options)
+        public void GenerateLayout(ReadOnlySpan<char> text, RendererOptions options, List<GlyphLayout> output)
         {
             var dpi = new Vector2(options.DpiX, options.DpiY);
             Vector2 origin = options.Origin / dpi;
@@ -54,7 +55,8 @@ namespace SixLabors.Fonts
             }
 
             AppliedFontStyle spanStyle = options.GetStyle(0, text.Length);
-            var layout = new List<GlyphLayout>(text.Length);
+            if (output.Capacity < text.Length)
+                output.Capacity = text.Length;
 
             float unscaledLineHeight = 0f;
             float lineHeight = 0f;
@@ -112,9 +114,9 @@ namespace SixLabors.Fonts
                 if (options.WrappingWidth > 0 && char.IsWhiteSpace(text[i]))
                 {
                     // keep a record of where to wrap text and ensure that no line starts with white space
-                    for (int j = layout.Count - 1; j >= 0; j--)
+                    for (int j = output.Count - 1; j >= 0; j--)
                     {
-                        if (!layout[j].IsWhiteSpace)
+                        if (!output[j].IsWhiteSpace)
                         {
                             lastWrappableLocation = j + 1;
                             break;
@@ -143,7 +145,7 @@ namespace SixLabors.Fonts
                         location.X = glyphLocation.X;
                     }
 
-                    layout.Add(new GlyphLayout(codePoint, new Glyph(glyph, spanStyle.PointSize), glyphLocation, glyphWidth, glyphHeight, lineHeight, startOfLine, false, false));
+                    output.Add(new GlyphLayout(codePoint, new Glyph(glyph, spanStyle.PointSize), glyphLocation, glyphWidth, glyphHeight, lineHeight, startOfLine, false, false));
                     startOfLine = false;
 
                     // move forward the actual width of the glyph, we are retaining the baseline
@@ -152,19 +154,19 @@ namespace SixLabors.Fonts
                     // if the word extended pass the end of the box, wrap it
                     if (location.X >= maxWidth && lastWrappableLocation > 0)
                     {
-                        if (lastWrappableLocation < layout.Count)
+                        if (lastWrappableLocation < output.Count)
                         {
-                            float wrappingOffset = layout[lastWrappableLocation].Location.X;
+                            float wrappingOffset = output[lastWrappableLocation].Location.X;
                             startOfLine = true;
 
                             // move the characters to the next line
-                            for (int j = lastWrappableLocation; j < layout.Count; j++)
+                            for (int j = lastWrappableLocation; j < output.Count; j++)
                             {
-                                GlyphLayout currentLayout = layout[j];
+                                GlyphLayout currentLayout = output[j];
                                 if (currentLayout.IsWhiteSpace)
                                 {
                                     wrappingOffset += currentLayout.Width;
-                                    layout.RemoveAt(j);
+                                    output.RemoveAt(j);
                                     j--;
                                     continue;
                                 }
@@ -179,7 +181,7 @@ namespace SixLabors.Fonts
                                 startOfLine = false;
 
                                 location.X = newLayout.Location.X + newLayout.Width;
-                                layout[j] = newLayout;
+                                output[j] = newLayout;
                             }
 
                             location.Y += lineHeight;
@@ -203,13 +205,13 @@ namespace SixLabors.Fonts
                     previousGlyph = null;
                     startOfLine = true;
 
-                    layout.Add(new GlyphLayout(codePoint, new Glyph(glyph, spanStyle.PointSize), location, 0, glyphHeight, lineHeight, startOfLine, true, true));
+                    output.Add(new GlyphLayout(codePoint, new Glyph(glyph, spanStyle.PointSize), location, 0, glyphHeight, lineHeight, startOfLine, true, true));
                     startOfLine = false;
                 }
                 else if (text[i] == '\n')
                 {
                     // carriage return resets the XX coordinate to 0
-                    layout.Add(new GlyphLayout(codePoint, new Glyph(glyph, spanStyle.PointSize), location, 0, glyphHeight, lineHeight, startOfLine, true, true));
+                    output.Add(new GlyphLayout(codePoint, new Glyph(glyph, spanStyle.PointSize), location, 0, glyphHeight, lineHeight, startOfLine, true, true));
                     location.X = 0;
                     location.Y += lineHeight;
                     unscaledLineHeight = 0;
@@ -236,7 +238,7 @@ namespace SixLabors.Fonts
                         finalWidth += tabStop;
                     }
 
-                    layout.Add(new GlyphLayout(codePoint, new Glyph(glyph, spanStyle.PointSize), location, finalWidth, glyphHeight, lineHeight, startOfLine, true, false));
+                    output.Add(new GlyphLayout(codePoint, new Glyph(glyph, spanStyle.PointSize), location, finalWidth, glyphHeight, lineHeight, startOfLine, true, false));
                     startOfLine = false;
 
                     // advance to a position > width away that
@@ -245,7 +247,7 @@ namespace SixLabors.Fonts
                 }
                 else if (text[i] == ' ')
                 {
-                    layout.Add(new GlyphLayout(codePoint, new Glyph(glyph, spanStyle.PointSize), location, glyphWidth, glyphHeight, lineHeight, startOfLine, true, false));
+                    output.Add(new GlyphLayout(codePoint, new Glyph(glyph, spanStyle.PointSize), location, glyphWidth, glyphHeight, lineHeight, startOfLine, true, false));
                     startOfLine = false;
                     location.X += glyphWidth;
                     previousGlyph = null;
@@ -260,9 +262,11 @@ namespace SixLabors.Fonts
                 case VerticalAlignment.Center:
                     offset += new Vector2(0, -0.5f * totalHeight);
                     break;
+
                 case VerticalAlignment.Bottom:
                     offset += new Vector2(0, -totalHeight);
                     break;
+
                 case VerticalAlignment.Top:
                 default:
                     // no change
@@ -270,23 +274,22 @@ namespace SixLabors.Fonts
             }
 
             Vector2 lineOffset = offset;
-            for (int i = 0; i < layout.Count; i++)
+            for (int i = 0; i < output.Count; i++)
             {
-                GlyphLayout glyphLayout = layout[i];
+                GlyphLayout glyphLayout = output[i];
                 if (glyphLayout.StartOfLine)
                 {
-                    lineOffset = offset;
+                    // redundant
+                    //lineOffset = offset;
 
                     // scan ahead measuring width
                     float width = glyphLayout.Width;
-                    for (int j = i + 1; j < layout.Count; j++)
+                    for (int j = i + 1; j < output.Count; j++)
                     {
-                        if (layout[j].StartOfLine)
-                        {
+                        if (output[j].StartOfLine)
                             break;
-                        }
 
-                        width = layout[j].Location.X + layout[j].Width; // rhs
+                        width = output[j].Location.X + output[j].Width; // rhs
                     }
 
                     switch (options.HorizontalAlignment)
@@ -294,9 +297,11 @@ namespace SixLabors.Fonts
                         case HorizontalAlignment.Right:
                             lineOffset = new Vector2(originX - width, 0) + offset;
                             break;
+
                         case HorizontalAlignment.Center:
                             lineOffset = new Vector2(originX - (width / 2f), 0) + offset;
                             break;
+
                         case HorizontalAlignment.Left:
                         default:
                             lineOffset = new Vector2(originX, 0) + offset;
@@ -305,10 +310,8 @@ namespace SixLabors.Fonts
                 }
 
                 // TODO calculate an offset from the 'origin' based on TextAlignment for each line
-                layout[i] = new GlyphLayout(glyphLayout.CodePoint, glyphLayout.Glyph, glyphLayout.Location + lineOffset + origin, glyphLayout.Width, glyphLayout.Height, glyphLayout.LineHeight, glyphLayout.StartOfLine, glyphLayout.IsWhiteSpace, glyphLayout.IsControlCharacter);
+                output[i] = new GlyphLayout(glyphLayout.CodePoint, glyphLayout.Glyph, glyphLayout.Location + lineOffset + origin, glyphLayout.Width, glyphLayout.Height, glyphLayout.LineHeight, glyphLayout.StartOfLine, glyphLayout.IsWhiteSpace, glyphLayout.IsControlCharacter);
             }
-
-            return layout;
         }
     }
 

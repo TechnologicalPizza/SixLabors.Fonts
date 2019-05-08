@@ -25,10 +25,15 @@ namespace SixLabors.Fonts
             RenderText(renderer, text, options, TextLayout.Default);
         }
 
+        static List<GlyphLayout> lst = new List<GlyphLayout>();
+
         internal static void RenderText(
             IGlyphRenderer renderer, ReadOnlySpan<char> text, RendererOptions options, TextLayout layoutEngine)
         {
-            List<GlyphLayout> glyphsToRender = layoutEngine.GenerateLayout(text, options);
+            //var glyphsToRender = new List<GlyphLayout>();
+            var glyphsToRender = lst;
+            glyphsToRender.Clear();
+            layoutEngine.GenerateLayout(text, options, glyphsToRender);
 
             Vector2 dpi = new Vector2(options.DpiX, options.DpiY);
             RectangleF rect = TextMeasurer.GetBounds(glyphsToRender, dpi);
