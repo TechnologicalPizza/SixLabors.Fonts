@@ -158,13 +158,13 @@ namespace SixLabors.Fonts
         {
             IFontInstance instance = this.Family.Find(this.requestedStyle);
 
-            if (instance is null && this.requestedStyle.HasFlag(FontStyle.Italic))
+            if (instance is null && this.requestedStyle.HasFlags(FontStyle.Italic))
             {
                 // can find style requested and they want one thats atleast partial itallic try the regual italic
                 instance = this.Family.Find(FontStyle.Italic);
             }
 
-            if (instance is null && this.requestedStyle.HasFlag(FontStyle.Bold))
+            if (instance is null && this.requestedStyle.HasFlags(FontStyle.Bold))
             {
                 // can find style requested and they want one thats atleast partial bold try the regular bold
                 instance = this.Family.Find(FontStyle.Bold);

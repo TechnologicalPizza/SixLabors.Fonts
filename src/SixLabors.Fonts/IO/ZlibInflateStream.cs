@@ -160,7 +160,7 @@ namespace SixLabors.Fonts.IO
             if (origin == SeekOrigin.Begin)
             {
                 origin = SeekOrigin.Current;
-                offset = offset - this.position;
+                offset -= this.position;
             }
 
             if (origin == SeekOrigin.Current && offset >= 0)

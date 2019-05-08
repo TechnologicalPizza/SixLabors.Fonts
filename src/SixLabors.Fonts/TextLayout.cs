@@ -22,10 +22,10 @@ namespace SixLabors.Fonts
         /// <param name="text">The text.</param>
         /// <param name="options">The style.</param>
         /// <returns>A collection of layout that describe all thats needed to measure or render a series of glyphs.</returns>
-        public IReadOnlyList<GlyphLayout> GenerateLayout(ReadOnlySpan<char> text, RendererOptions options)
+        public List<GlyphLayout> GenerateLayout(ReadOnlySpan<char> text, RendererOptions options)
         {
             var dpi = new Vector2(options.DpiX, options.DpiY);
-            Vector2 origin = (Vector2)options.Origin / dpi;
+            Vector2 origin = options.Origin / dpi;
 
             float maxWidth = float.MaxValue;
             float originX = 0;
@@ -41,9 +41,11 @@ namespace SixLabors.Fonts
                     case HorizontalAlignment.Right:
                         originX = maxWidth;
                         break;
+
                     case HorizontalAlignment.Center:
                         originX = 0.5f * maxWidth;
                         break;
+
                     case HorizontalAlignment.Left:
                     default:
                         originX = 0;
@@ -58,7 +60,7 @@ namespace SixLabors.Fonts
             float lineHeight = 0f;
             float unscaledLineMaxAscender = 0f;
             float lineMaxAscender = 0f;
-            Vector2 location = Vector2.Zero;
+            var location = Vector2.Zero;
             float lineHeightOfFirstLine = 0;
 
             // Remember where the top of the layouted text is for accurate vertical alignment.
@@ -76,9 +78,7 @@ namespace SixLabors.Fonts
             {
                 // four-byte characters are processed on the first char
                 if (char.IsLowSurrogate(text[i]))
-                {
                     continue;
-                }
 
                 if (spanStyle.End < i)
                 {
@@ -104,9 +104,7 @@ namespace SixLabors.Fonts
                 if (firstLine)
                 {
                     if (lineHeight > lineHeightOfFirstLine)
-                    {
                         lineHeightOfFirstLine = lineHeight;
-                    }
 
                     top = lineHeightOfFirstLine - lineMaxAscender;
                 }
@@ -162,19 +160,26 @@ namespace SixLabors.Fonts
                             // move the characters to the next line
                             for (int j = lastWrappableLocation; j < layout.Count; j++)
                             {
-                                if (layout[j].IsWhiteSpace)
+                                GlyphLayout currentLayout = layout[j];
+                                if (currentLayout.IsWhiteSpace)
                                 {
-                                    wrappingOffset += layout[j].Width;
+                                    wrappingOffset += currentLayout.Width;
                                     layout.RemoveAt(j);
                                     j--;
                                     continue;
                                 }
 
-                                Vector2 current = layout[j].Location;
-                                layout[j] = new GlyphLayout(layout[j].CodePoint, layout[j].Glyph, new Vector2(current.X - wrappingOffset, current.Y + lineHeight), layout[j].Width, layout[j].Height, layout[j].LineHeight, startOfLine, layout[j].IsWhiteSpace, layout[j].IsControlCharacter);
+                                Vector2 currentLocation = currentLayout.Location;
+                                GlyphLayout newLayout = new GlyphLayout(
+                                    currentLayout.CodePoint, currentLayout.Glyph, 
+                                    new Vector2(currentLocation.X - wrappingOffset, currentLocation.Y + lineHeight),
+                                    currentLayout.Width, currentLayout.Height,
+                                    currentLayout.LineHeight, startOfLine, currentLayout.IsWhiteSpace, currentLayout.IsControlCharacter);
+
                                 startOfLine = false;
 
-                                location.X = layout[j].Location.X + layout[j].Width;
+                                location.X = newLayout.Location.X + newLayout.Width;
+                                layout[j] = newLayout;
                             }
 
                             location.Y += lineHeight;

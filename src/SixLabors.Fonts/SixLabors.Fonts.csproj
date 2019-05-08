@@ -6,7 +6,7 @@
     <VersionPrefix Condition="$(packageversion) != ''">$(packageversion)</VersionPrefix>
     <VersionPrefix Condition="$(packageversion) == ''">0.1.0-alpha1</VersionPrefix>
     <Authors>Six Labors and contributors</Authors>
-    <TargetFrameworks>netstandard2.0;netstandard1.3</TargetFrameworks>
+    <TargetFramework>netstandard2.0</TargetFramework>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <AssemblyName>SixLabors.Fonts</AssemblyName>
@@ -39,12 +39,11 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <AdditionalFiles Include="..\..\standards\stylecop.json" />
+    <PackageReference Include="System.Memory" Version="4.5.2" />
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="StyleCop.Analyzers" Version="1.1.1-beta.61" PrivateAssets="All" />
-    <PackageReference Include="SixLabors.Core" Version="1.0.0-beta0007" />
+    <ProjectReference Include="..\..\..\SixLabors.Core\src\SixLabors.Core\SixLabors.Core.csproj" />
   </ItemGroup>
 
 </Project>

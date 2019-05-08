@@ -65,16 +65,14 @@ namespace SixLabors.Fonts
         internal static SizeF GetSize(IReadOnlyList<GlyphLayout> glyphLayouts, Vector2 dpi)
         {
             if (glyphLayouts.Count == 0)
-            {
                 return Size.Empty;
-            }
 
-            float left = glyphLayouts.Min(x => x.Location.X);
-            float right = glyphLayouts.Max(x => x.Location.X + x.Width);
+            float left = glyphLayouts.FastMin(x => x.Location.X);
+            float right = glyphLayouts.FastMax(x => x.Location.X + x.Width);
 
             // location is bottom left of the line
-            float top = glyphLayouts.Min(x => x.Location.Y - x.LineHeight);
-            float bottom = glyphLayouts.Max(x => x.Location.Y - x.LineHeight + x.Height);
+            float top = glyphLayouts.FastMin(x => x.Location.Y - x.LineHeight);
+            float bottom = glyphLayouts.FastMax(x => x.Location.Y - x.LineHeight + x.Height);
 
             var topLeft = new Vector2(left, top) * dpi;
             var bottomRight = new Vector2(right, bottom) * dpi;

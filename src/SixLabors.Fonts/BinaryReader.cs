@@ -59,7 +59,7 @@ namespace SixLabors.Fonts
             // if begin offsert the offset by the start of stream postion
             if (origin == SeekOrigin.Begin)
             {
-                offset = offset + this.StartOfStream;
+                offset += this.StartOfStream;
             }
 
             this.BaseStream.Seek(offset, origin);

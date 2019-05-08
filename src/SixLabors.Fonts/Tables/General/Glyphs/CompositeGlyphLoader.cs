@@ -62,7 +62,7 @@ namespace SixLabors.Fonts.Tables.General.Glyphs
 
                 short arg1;
                 short arg2;
-                if (flags.HasFlag(CompositeFlags.ArgsAreWords))
+                if (flags.HasFlags(CompositeFlags.ArgsAreWords))
                 {
                     arg1 = reader.ReadInt16();
                     arg2 = reader.ReadInt16();
@@ -75,7 +75,7 @@ namespace SixLabors.Fonts.Tables.General.Glyphs
 
                 short dx;
                 short dy;
-                if (flags.HasFlag(CompositeFlags.ArgsAreXYValues))
+                if (flags.HasFlags(CompositeFlags.ArgsAreXYValues))
                 {
                     dx = arg1;
                     dy = arg2;
@@ -90,18 +90,18 @@ namespace SixLabors.Fonts.Tables.General.Glyphs
 
                 Matrix3x2 transform = Matrix3x2.Identity;
                 transform.Translation = new Vector2(dx, dy);
-                if (flags.HasFlag(CompositeFlags.WeHaveAScale))
+                if (flags.HasFlags(CompositeFlags.WeHaveAScale))
                 {
                     float scale = reader.ReadF2dot14(); // Format 2.14
                     transform.M11 = scale;
                     transform.M21 = scale;
                 }
-                else if (flags.HasFlag(CompositeFlags.WeHaveXAndYScale))
+                else if (flags.HasFlags(CompositeFlags.WeHaveXAndYScale))
                 {
                     transform.M11 = reader.ReadF2dot14();
                     transform.M22 = reader.ReadF2dot14();
                 }
-                else if (flags.HasFlag(CompositeFlags.WeHaveATwoByTwo))
+                else if (flags.HasFlags(CompositeFlags.WeHaveATwoByTwo))
                 {
                     transform.M11 = reader.ReadF2dot14();
                     transform.M12 = reader.ReadF2dot14();
@@ -111,11 +111,11 @@ namespace SixLabors.Fonts.Tables.General.Glyphs
 
                 result.Add(new Composite(glyphIndex, transform));
             }
-            while (flags.HasFlag(CompositeFlags.MoreComponents));
+            while (flags.HasFlags(CompositeFlags.MoreComponents));
 
-            if (flags.HasFlag(CompositeFlags.WeHaveInstructions))
+            // TODO: deal with instructions
+            if (flags.HasFlags(CompositeFlags.WeHaveInstructions))
             {
-                // TODO deal with instructions
             }
 
             return new CompositeGlyphLoader(result, bounds);

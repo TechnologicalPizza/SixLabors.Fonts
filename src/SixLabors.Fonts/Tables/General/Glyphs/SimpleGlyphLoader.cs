@@ -81,7 +81,7 @@ namespace SixLabors.Fonts.Tables.General.Glyphs
             bool[] onCurves = new bool[flags.Length];
             for (int i = flags.Length - 1; i >= 0; --i)
             {
-                onCurves[i] = flags[i].HasFlag(Flags.OnCurve);
+                onCurves[i] = flags[i].HasFlags(Flags.OnCurve);
             }
 
             return new SimpleGlyphLoader(xs, ys, onCurves, endPoints, bounds);
@@ -102,7 +102,7 @@ namespace SixLabors.Fonts.Tables.General.Glyphs
                 else
                 {
                     flag = (Flags)reader.ReadUInt8();
-                    if (flag.HasFlag(Flags.Repeat))
+                    if (flag.HasFlags(Flags.Repeat))
                     {
                         repeatCount = reader.ReadByte();
                     }
@@ -121,14 +121,14 @@ namespace SixLabors.Fonts.Tables.General.Glyphs
             for (int i = 0; i < pointCount; i++)
             {
                 int dx;
-                if (flags[i].HasFlag(isByte))
+                if (flags[i].HasFlags(isByte))
                 {
                     byte b = reader.ReadByte();
-                    dx = flags[i].HasFlag(signOrSame) ? b : -b;
+                    dx = flags[i].HasFlags(signOrSame) ? b : -b;
                 }
                 else
                 {
-                    if (flags[i].HasFlag(signOrSame))
+                    if (flags[i].HasFlags(signOrSame))
                     {
                         dx = 0;
                     }

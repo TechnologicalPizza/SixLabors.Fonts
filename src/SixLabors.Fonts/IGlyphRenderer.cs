@@ -6,7 +6,7 @@ using SixLabors.Primitives;
 namespace SixLabors.Fonts
 {
     /// <summary>
-    /// A surface that can have a glyph renered to it as a series of actions.
+    /// A surface that can have a glyph rendered to it as a series of actions.
     /// </summary>
     public interface IGlyphRenderer
     {

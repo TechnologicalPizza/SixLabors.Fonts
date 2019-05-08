@@ -19,7 +19,7 @@ namespace SixLabors.Fonts
         /// <returns>Returns the orginonal <paramref name="renderer"/></returns>
         public static IGlyphRenderer Render(this IGlyphRenderer renderer, ReadOnlySpan<char> text, RendererOptions options)
         {
-            new TextRenderer(renderer).RenderText(text, options);
+            TextRenderer.RenderText(renderer, text, options);
             return renderer;
         }
     }

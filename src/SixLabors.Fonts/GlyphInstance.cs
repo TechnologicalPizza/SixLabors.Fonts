@@ -13,27 +13,22 @@ namespace SixLabors.Fonts
     /// </summary>
     public partial class GlyphInstance
     {
-        private readonly ushort sizeOfEm;
-        private readonly Vector2[] controlPoints;
-        private readonly bool[] onCurves;
-        private readonly ushort[] endPoints;
-        private readonly short leftSideBearing;
-        private readonly float scaleFactor;
-
-        internal GlyphInstance(FontInstance font, Vector2[] controlPoints, bool[] onCurves, ushort[] endPoints, Bounds bounds, ushort advanceWidth, short leftSideBearing, ushort sizeOfEm, ushort index)
+        internal GlyphInstance(
+            FontInstance font, Vector2[] controlPoints, bool[] onCurves, ushort[] endPoints, 
+            Bounds bounds, ushort advanceWidth, short leftSideBearing, ushort sizeOfEm, ushort index)
         {
             this.Font = font;
-            this.sizeOfEm = sizeOfEm;
-            this.controlPoints = controlPoints;
-            this.onCurves = onCurves;
-            this.endPoints = endPoints;
+            this.SizeOfEm = sizeOfEm;
+            this.ControlPoints = controlPoints;
+            this.OnCurves = onCurves;
+            this.EndPoints = endPoints;
             this.Bounds = bounds;
             this.AdvanceWidth = advanceWidth;
             this.Index = index;
             this.Height = sizeOfEm - this.Bounds.Min.Y;
 
-            this.leftSideBearing = leftSideBearing;
-            this.scaleFactor = (float)(this.sizeOfEm * 72f);
+            this.LeftSideBearing = leftSideBearing;
+            this.ScaleFactor = (float)(this.SizeOfEm * 72f);
         }
 
         /// <summary>
@@ -80,8 +75,8 @@ namespace SixLabors.Fonts
 
         internal RectangleF BoundingBox(Vector2 origin, Vector2 scaledPointSize)
         {
-            Vector2 size = (this.Bounds.Size() * scaledPointSize) / this.scaleFactor;
-            Vector2 loc = ((new Vector2(this.Bounds.Min.X, this.Bounds.Max.Y) * scaledPointSize) / this.scaleFactor) * Scale;
+            Vector2 size = (this.Bounds.Size() * scaledPointSize) / this.ScaleFactor;
+            Vector2 loc = ((new Vector2(this.Bounds.Min.X, this.Bounds.Max.Y) * scaledPointSize) / this.ScaleFactor) * Scale;
 
             loc = origin + loc;
 
@@ -99,37 +94,34 @@ namespace SixLabors.Fonts
         /// <exception cref="NotSupportedException">Too many control points</exception>
         public void RenderTo(IGlyphRenderer surface, float pointSize, Vector2 location, Vector2 dpi, float lineHeight)
         {
-            location = location * dpi;
+            location *= dpi;
 
-            Vector2 firstPoint = Vector2.Zero;
-
+            //Vector2 firstPoint = Vector2.Zero;
             Vector2 scaledPoint = dpi * pointSize;
-
             RectangleF box = this.BoundingBox(location, scaledPoint);
 
             var paramaters = new GlyphRendererParameters(this, pointSize, dpi);
 
             if (surface.BeginGlyph(box, paramaters))
             {
-                int startOfContor = 0;
                 int endOfContor = -1;
-                for (int i = 0; i < this.endPoints.Length; i++)
+                for (int i = 0; i < this.EndPoints.Length; i++)
                 {
                     surface.BeginFigure();
-                    startOfContor = endOfContor + 1;
-                    endOfContor = this.endPoints[i];
+                    int startOfContor = endOfContor + 1;
+                    endOfContor = this.EndPoints[i];
 
                     Vector2 prev = Vector2.Zero;
                     Vector2 curr = this.GetPoint(ref scaledPoint, endOfContor) + location;
                     Vector2 next = this.GetPoint(ref scaledPoint, startOfContor) + location;
 
-                    if (this.onCurves[endOfContor])
+                    if (this.OnCurves[endOfContor])
                     {
                         surface.MoveTo(curr);
                     }
                     else
                     {
-                        if (this.onCurves[startOfContor])
+                        if (this.OnCurves[startOfContor])
                         {
                             surface.MoveTo(next);
                         }
@@ -151,7 +143,7 @@ namespace SixLabors.Fonts
                         int prevIndex = startOfContor + (((length + p) - 1) % length);
                         next = this.GetPoint(ref scaledPoint, nextIndex) + location;
 
-                        if (this.onCurves[currentIndex])
+                        if (this.OnCurves[currentIndex])
                         {
                             // This is a straight line.
                             surface.LineTo(curr);
@@ -161,13 +153,13 @@ namespace SixLabors.Fonts
                             Vector2 prev2 = prev;
                             Vector2 next2 = next;
 
-                            if (!this.onCurves[prevIndex])
+                            if (!this.OnCurves[prevIndex])
                             {
                                 prev2 = (curr + prev) / 2;
                                 surface.LineTo(prev2);
                             }
 
-                            if (!this.onCurves[nextIndex])
+                            if (!this.OnCurves[nextIndex])
                             {
                                 next2 = (curr + next) / 2;
                             }
@@ -187,9 +179,8 @@ namespace SixLabors.Fonts
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private Vector2 GetPoint(ref Vector2 scaledPoint, int pointIndex)
         {
-            Vector2 point = Scale * ((this.controlPoints[pointIndex] * scaledPoint) / this.scaleFactor); // scale each point as we go, w will now have the correct relative point size
-
-            return point;
+            // scale each point as we go, w will now have the correct relative point size
+            return Scale * ((this.ControlPoints[pointIndex] * scaledPoint) / this.ScaleFactor);
         }
 
         private static void AlignToGrid(ref Vector2 point)
@@ -207,18 +198,22 @@ namespace SixLabors.Fonts
         {
             switch (points.Count)
             {
-                case 0: break;
+                case 0:
+                    break;
+
                 case 1:
                     surface.QuadraticBezierTo(
                         points.SecondControlPoint,
                         point);
                     break;
+
                 case 2:
                     surface.CubicBezierTo(
                         points.SecondControlPoint,
                         points.ThirdControlPoint,
                         point);
                     break;
+
                 default:
                     throw new NotSupportedException("Too many control points");
             }
@@ -240,9 +235,11 @@ namespace SixLabors.Fonts
                     case 0:
                         this.SecondControlPoint = point;
                         break;
+
                     case 1:
                         this.ThirdControlPoint = point;
                         break;
+
                     default:
                         throw new NotSupportedException("Too many control points");
                 }
@@ -260,31 +257,31 @@ namespace SixLabors.Fonts
             }
         }
 
-        public ushort SizeOfEm => this.sizeOfEm;
+        public ushort SizeOfEm { get; }
 
         /// <summary>
         /// The points defining the shape of this glyph
         /// </summary>
-        public Vector2[] ControlPoints => this.controlPoints;
+        public Vector2[] ControlPoints { get; }
 
         /// <summary>
         /// Wether or not the corresponding control point is on a curve
         /// </summary>
-        public bool[] OnCurves => this.onCurves;
+        public bool[] OnCurves { get; }
 
         /// <summary>
         /// The end points
         /// </summary>
-        public ushort[] EndPoints => this.endPoints;
+        public ushort[] EndPoints { get; }
 
         /// <summary>
         /// The distance from the bounding box start
         /// </summary>
-        public short LeftSideBearing => this.leftSideBearing;
+        public short LeftSideBearing { get; }
 
         /// <summary>
         /// The scale factor that is applied to the glyph
         /// </summary>
-        public float ScaleFactor => this.scaleFactor;
+        public float ScaleFactor { get; }
     }
 }
