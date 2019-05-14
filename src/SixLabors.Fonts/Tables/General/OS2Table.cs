@@ -177,23 +177,13 @@ namespace SixLabors.Fonts.Tables.General
                 return version0Table;
             }
 
-            ushort codePageRange1 = 0;
-            ushort codePageRange2 = 0;
-            short heightX = 0;
-            short capHeight = 0;
-
-            ushort defaultChar = 0;
-            ushort breakChar = 0;
-            ushort maxContext = 0;
-
-            codePageRange1 = reader.ReadUInt16(); // Bits 0–31
-            codePageRange2 = reader.ReadUInt16(); // Bits 32–63
-            heightX = reader.ReadInt16();
-            capHeight = reader.ReadInt16();
-
-            defaultChar = reader.ReadUInt16();
-            breakChar = reader.ReadUInt16();
-            maxContext = reader.ReadUInt16();
+            ushort codePageRange1 = reader.ReadUInt16();
+            ushort codePageRange2 = reader.ReadUInt16();
+            short heightX = reader.ReadInt16();
+            short capHeight = reader.ReadInt16();
+            ushort defaultChar = reader.ReadUInt16();
+            ushort breakChar = reader.ReadUInt16();
+            ushort maxContext = reader.ReadUInt16();
 
             OS2Table versionLessthan5Table = new OS2Table(
                     version0Table,

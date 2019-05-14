@@ -123,9 +123,7 @@ namespace SixLabors.Fonts
         {
             // we also want to wire int sub/super script offsetting into here too
             if (previousGlyph is null)
-            {
                 return Vector2.Zero;
-            }
 
             // once we wire in the kerning calculations this will return real data
             return this.kerning.GetOffset(previousGlyph.Index, glyph.Index);

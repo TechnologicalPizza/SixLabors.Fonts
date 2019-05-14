@@ -29,7 +29,7 @@ namespace SixLabors.Fonts
 
             // we should immediately read the table header to learn which tables we have and what order they are in
             uint version = reader.ReadUInt32();
-            ushort tableCount = 0;
+            ushort tableCount;
             if (version == 0x774F4646)
             {
                 // this is a woff file

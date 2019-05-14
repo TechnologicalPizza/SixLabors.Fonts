@@ -2,7 +2,9 @@
 // Licensed under the Apache License, Version 2.0.
 
 using System;
+using System.Collections.Generic;
 using System.Numerics;
+using SixLabors.Memory;
 
 namespace SixLabors.Fonts.Tables.General.Glyphs
 {
@@ -25,9 +27,9 @@ namespace SixLabors.Fonts.Tables.General.Glyphs
 
         public SimpleGlyphLoader(Bounds bounds)
         {
-            this.ys = this.xs = new short[0];
-            this.onCurves = new bool[0];
-            this.endPoints = new ushort[0];
+            this.ys = this.xs = Array.Empty<short>();
+            this.onCurves = Array.Empty<bool>();
+            this.endPoints = Array.Empty<ushort>();
             this.bounds = bounds;
         }
 
@@ -40,21 +42,15 @@ namespace SixLabors.Fonts.Tables.General.Glyphs
         private static Vector2[] Convert(short[] xs, short[] ys)
         {
             var vectors = new Vector2[xs.Length];
-            Vector2 current = Vector2.Zero;
             for (int i = 0; i < xs.Length; i++)
-            {
                 vectors[i] = new Vector2(xs[i], ys[i]);
-            }
-
             return vectors;
         }
 
         public static GlyphLoader LoadSimpleGlyph(BinaryReader reader, short count, in Bounds bounds)
         {
             if (count == 0)
-            {
                 return new SimpleGlyphLoader(bounds);
-            }
 
             // uint16         | endPtsOfContours[n] | Array of last points of each contour; n is the number of contours.
             // uint16         | instructionLength   | Total number of bytes for instructions.
@@ -70,9 +66,7 @@ namespace SixLabors.Fonts.Tables.General.Glyphs
             // TODO: should this take the max points rather?
             int pointCount = 0;
             if (count > 0)
-            {
                 pointCount = endPoints[count - 1] + 1;
-            }
 
             Flags[] flags = ReadFlags(reader, pointCount);
             short[] xs = ReadCoordinates(reader, pointCount, flags, Flags.XByte, Flags.XSignOrSame);
@@ -80,9 +74,7 @@ namespace SixLabors.Fonts.Tables.General.Glyphs
 
             bool[] onCurves = new bool[flags.Length];
             for (int i = flags.Length - 1; i >= 0; --i)
-            {
                 onCurves[i] = flags[i].HasFlags(Flags.OnCurve);
-            }
 
             return new SimpleGlyphLoader(xs, ys, onCurves, endPoints, bounds);
         }
@@ -103,9 +95,7 @@ namespace SixLabors.Fonts.Tables.General.Glyphs
                 {
                     flag = (Flags)reader.ReadUInt8();
                     if (flag.HasFlags(Flags.Repeat))
-                    {
                         repeatCount = reader.ReadByte();
-                    }
                 }
 
                 result[c++] = flag;
@@ -129,13 +119,9 @@ namespace SixLabors.Fonts.Tables.General.Glyphs
                 else
                 {
                     if (flags[i].HasFlags(signOrSame))
-                    {
                         dx = 0;
-                    }
                     else
-                    {
                         dx = reader.ReadInt16();
-                    }
                 }
 
                 x += dx;

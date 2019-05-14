@@ -21,9 +21,7 @@ namespace SixLabors.Fonts.Tables.General.Glyphs
             if (this.loop)
             {
                 if (this.glyph is null)
-                {
                     this.glyph = new GlyphVector(new Vector2[0], new bool[0], new ushort[0], this.fallbackEmptyBounds);
-                }
 
                 return this.glyph.Value;
             }

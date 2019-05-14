@@ -7,6 +7,13 @@ namespace SixLabors.Fonts.Tables.General.Glyphs
 {
     internal readonly struct GlyphVector
     {
+        public Vector2[] ControlPoints { get; }
+        public bool[] OnCurves { get; }
+        public ushort[] EndPoints { get; }
+        public Bounds Bounds { get; }
+
+        public int PointCount => this.ControlPoints.Length;
+
         internal GlyphVector(Vector2[] controlPoints, bool[] onCurves, ushort[] endPoints, Bounds bounds)
         {
             this.ControlPoints = controlPoints;
@@ -14,15 +21,5 @@ namespace SixLabors.Fonts.Tables.General.Glyphs
             this.EndPoints = endPoints;
             this.Bounds = bounds;
         }
-
-        public int PointCount => this.ControlPoints.Length;
-
-        public Vector2[] ControlPoints { get; }
-
-        public ushort[] EndPoints { get; }
-
-        public bool[] OnCurves { get; }
-
-        public Bounds Bounds { get; }
     }
 }

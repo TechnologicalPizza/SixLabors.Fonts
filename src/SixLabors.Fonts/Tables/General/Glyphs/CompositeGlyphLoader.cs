@@ -3,56 +3,67 @@
 
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Numerics;
+using SixLabors.Fonts.Utilities;
+using SixLabors.Memory;
 
 namespace SixLabors.Fonts.Tables.General.Glyphs
 {
     internal sealed class CompositeGlyphLoader : GlyphLoader
     {
         private readonly Bounds bounds;
-        private readonly Composite[] result;
+        private List<Composite> result;
 
-        public CompositeGlyphLoader(IEnumerable<Composite> result, Bounds bounds)
+        public CompositeGlyphLoader(List<Composite> result, Bounds bounds)
         {
-            this.result = result.ToArray();
+            this.result = result;
             this.bounds = bounds;
         }
 
         public override GlyphVector CreateGlyph(GlyphTable table)
         {
-            var controlPoints = new List<Vector2>();
-            var onCurves = new List<bool>();
-            var endPoints = new List<ushort>();
-            //var minBounds = new List<Vector2>();
-            //var maxBounds = new List<Vector2>();
-            //var parts = new List<GlyphInstance>();
+            if (IsDisposed)
+                throw new ObjectDisposedException(nameof(CompositeGlyphLoader));
 
-            for (int resultIndex = 0; resultIndex < this.result.Length; resultIndex++)
+            var controlPoints = PrimitiveListPools.Vector2.Rent();
+            var onCurves = PrimitiveListPools.Bool.Rent();
+            var endPoints = PrimitiveListPools.UShort.Rent();
+            try
             {
-                Composite composite = this.result[resultIndex];
+                //var minBounds = new List<Vector2>();
+                //var maxBounds = new List<Vector2>();
+                //var parts = new List<GlyphInstance>();
 
-                GlyphVector glyph = table.GetGlyph(composite.GlyphIndex);
-                int pointcount = glyph.PointCount;
-                ushort endPointOffset = (ushort)controlPoints.Count;
-                for (int i = 0; i < pointcount; i++)
+                for (int resultIndex = 0; resultIndex < this.result.Count; resultIndex++)
                 {
-                    controlPoints.Add(Vector2.Transform(glyph.ControlPoints[i], composite.Transformation));
-                    onCurves.Add(glyph.OnCurves[i]);
+                    Composite composite = this.result[resultIndex];
+
+                    GlyphVector glyph = table.GetGlyph(composite.GlyphIndex);
+                    int pointcount = glyph.PointCount;
+                    ushort endPointOffset = (ushort)controlPoints.Count;
+                    for (int i = 0; i < pointcount; i++)
+                    {
+                        controlPoints.Add(Vector2.Transform(glyph.ControlPoints[i], composite.Transformation));
+                        onCurves.Add(glyph.OnCurves[i]);
+                    }
+
+                    foreach (ushort p in glyph.EndPoints)
+                        endPoints.Add((ushort)(p + endPointOffset));
                 }
 
-                foreach (ushort p in glyph.EndPoints)
-                {
-                    endPoints.Add((ushort)(p + endPointOffset));
-                }
+                return new GlyphVector(controlPoints.ToArray(), onCurves.ToArray(), endPoints.ToArray(), this.bounds);
             }
-
-            return new GlyphVector(controlPoints.ToArray(), onCurves.ToArray(), endPoints.ToArray(), this.bounds);
+            finally
+            {
+                PrimitiveListPools.Vector2.Return(controlPoints);
+                PrimitiveListPools.Bool.Rent(onCurves);
+                PrimitiveListPools.UShort.Rent(endPoints);
+            }
         }
 
         public static CompositeGlyphLoader LoadCompositeGlyph(BinaryReader reader, in Bounds bounds)
         {
-            var result = new List<Composite>();
+            var result = FontListPools.Composite.Rent();
             CompositeFlags flags;
             ushort glyphIndex;
             do
@@ -121,6 +132,16 @@ namespace SixLabors.Fonts.Tables.General.Glyphs
             return new CompositeGlyphLoader(result, bounds);
         }
 
+        protected override void Dispose(bool disposing)
+        {
+            if (!IsDisposed)
+            {
+                FontListPools.Composite.Return(result);
+                result = null;
+            }
+            base.Dispose(disposing);
+        }
+
         [Flags]
         private enum CompositeFlags : ushort
         {
@@ -141,15 +162,14 @@ namespace SixLabors.Fonts.Tables.General.Glyphs
 
         public readonly struct Composite
         {
+            public ushort GlyphIndex { get; }
+            public Matrix3x2 Transformation { get; }
+
             public Composite(ushort glyphIndex, Matrix3x2 transformation)
             {
                 this.GlyphIndex = glyphIndex;
                 this.Transformation = transformation;
             }
-
-            public ushort GlyphIndex { get; }
-
-            public Matrix3x2 Transformation { get; }
         }
     }
 }

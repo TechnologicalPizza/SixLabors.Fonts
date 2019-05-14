@@ -77,9 +77,7 @@ namespace SixLabors.Fonts.Tables.General
 
             var encodings = new EncodingRecord[numTables];
             for (int i = 0; i < numTables; i++)
-            {
                 encodings[i] = EncodingRecord.Read(reader);
-            }
 
             // foreach encoding we move forward looking for th subtables
             var tables = new List<CMapSubTable>(numTables);
@@ -88,12 +86,12 @@ namespace SixLabors.Fonts.Tables.General
                 reader.Seek(encoding.Key, System.IO.SeekOrigin.Begin);
 
                 ushort subTypeTableFormat = reader.ReadUInt16();
-
                 switch (subTypeTableFormat)
                 {
                     case 0:
                         tables.AddRange(Format0SubTable.Load(encoding, reader));
                         break;
+
                     case 4:
                         tables.AddRange(Format4SubTable.Load(encoding, reader));
                         break;
