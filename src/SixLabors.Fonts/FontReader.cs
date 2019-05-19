@@ -75,9 +75,7 @@ namespace SixLabors.Fonts
             }
 
             if (this.OutlineType != OutlineTypes.TrueType)
-            {
                 throw new Exceptions.InvalidFontFileException("Invalid glyph format, only TTF glyph outlines supported.");
-            }
 
             var headers = new Dictionary<string, TableHeader>(tableCount);
             for (int i = 0; i < tableCount; i++)
@@ -128,9 +126,7 @@ namespace SixLabors.Fonts
         {
             var reader = this.TryGetReaderAtTablePosition(tableName);
             if (reader == null)
-            {
                 throw new InvalidFontTableException("Unable to find table", tableName);
-            }
 
             return reader;
         }
