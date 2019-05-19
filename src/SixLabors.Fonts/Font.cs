@@ -98,7 +98,7 @@ namespace SixLabors.Fonts
         /// <value>
         ///   <c>true</c> if bold; otherwise, <c>false</c>.
         /// </value>
-        public bool Bold => (this.instance.Value.Description.Style & FontStyle.Bold) == FontStyle.Bold;
+        public bool IsBold => (this.instance.Value.Description.Style & FontStyle.Bold) == FontStyle.Bold;
 
         /// <summary>
         /// Gets a value indicating whether this <see cref="Font"/> is italic.
@@ -106,15 +106,12 @@ namespace SixLabors.Fonts
         /// <value>
         ///   <c>true</c> if italic; otherwise, <c>false</c>.
         /// </value>
-        public bool Italic => (this.instance.Value.Description.Style & FontStyle.Italic) == FontStyle.Italic;
+        public bool IsItalic => (this.instance.Value.Description.Style & FontStyle.Italic) == FontStyle.Italic;
 
         /// <summary>
-        /// Gets the size of the em.
+        /// Gets amount of units per em.
         /// </summary>
-        /// <value>
-        /// The size of the em.
-        /// </value>
-        public ushort EmSize => this.instance.Value.EmSize;
+        public ushort UnitsPerEm => this.instance.Value.UnitsPerEm;
 
         /// <summary>
         /// Gets the ascender (from the OS/2 table field <c>TypoAscender</c>).
@@ -139,9 +136,6 @@ namespace SixLabors.Fonts
         /// <summary>
         /// Gets the font instance.
         /// </summary>
-        /// <value>
-        /// The font instance.
-        /// </value>
         public IFontInstance Instance => this.instance.Value;
 
         /// <summary>

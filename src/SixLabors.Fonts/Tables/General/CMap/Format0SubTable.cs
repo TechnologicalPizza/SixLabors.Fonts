@@ -8,26 +8,23 @@ namespace SixLabors.Fonts.Tables.General.CMap
 {
     internal sealed class Format0SubTable : CMapSubTable
     {
-        public Format0SubTable(ushort language, PlatformIDs platform, ushort encoding, byte[] glyphIds)
+        public ushort Language { get; }
+        public byte[] GlyphIDs { get; }
+
+        public Format0SubTable(ushort language, PlatformEncodingID platform, ushort encoding, byte[] glyphIds)
             : base(platform, encoding, 0)
         {
             this.Language = language;
-            this.GlyphIds = glyphIds;
+            this.GlyphIDs = glyphIds;
         }
-
-        public ushort Language { get; }
-
-        public byte[] GlyphIds { get; }
 
         public override ushort GetGlyphId(int codePoint)
         {
             uint b = (uint)codePoint;
-            if (b >= this.GlyphIds.Length)
-            {
+            if (b >= this.GlyphIDs.Length)
                 return 0;
-            }
 
-            return this.GlyphIds[b];
+            return this.GlyphIDs[b];
         }
 
         public static IEnumerable<Format0SubTable> Load(IEnumerable<EncodingRecord> encodings, BinaryReader reader)
@@ -41,9 +38,7 @@ namespace SixLabors.Fonts.Tables.General.CMap
             byte[] glyphIds = reader.ReadBytes(glyphsCount);
 
             foreach (EncodingRecord encoding in encodings)
-            {
                 yield return new Format0SubTable(language, encoding.PlatformID, encoding.EncodingID, glyphIds);
-            }
         }
     }
 }

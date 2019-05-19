@@ -6,7 +6,7 @@ namespace SixLabors.Fonts.WellKnownIds
     /// <summary>
     /// Encoding IDS
     /// </summary>
-    internal enum EncodingIDs : ushort
+    internal enum EncodingID : ushort
     {
         /// <summary>
         /// Unicode 1.0 semantics

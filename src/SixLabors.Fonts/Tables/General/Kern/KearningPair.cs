@@ -7,6 +7,11 @@ namespace SixLabors.Fonts.Tables.General.Kern
 {
     internal readonly struct KearningPair : IComparable<KearningPair>
     {
+        public uint Key { get; }
+        public ushort Left { get; }
+        public ushort Right { get; }
+        public short Offset { get; }
+
         internal KearningPair(ushort left, ushort right, short offset)
         {
             this.Left = left;
@@ -14,14 +19,6 @@ namespace SixLabors.Fonts.Tables.General.Kern
             this.Offset = offset;
             this.Key = CalculateKey(left, right);
         }
-
-        public uint Key { get; }
-
-        public ushort Left { get; }
-
-        public ushort Right { get; }
-
-        public short Offset { get; }
 
         public static uint CalculateKey(ushort left, ushort right)
         {

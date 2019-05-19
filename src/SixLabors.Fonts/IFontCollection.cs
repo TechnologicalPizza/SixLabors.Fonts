@@ -8,7 +8,7 @@ namespace SixLabors.Fonts
     /// <summary>
     /// A readable and writable collection of fonts.
     /// </summary>
-    /// <seealso cref="SixLabors.Fonts.IReadOnlyFontCollection" />
+    /// <seealso cref="IReadOnlyFontCollection" />
     public interface IFontCollection : IReadOnlyFontCollection
     {
         /// <summary>
@@ -17,5 +17,10 @@ namespace SixLabors.Fonts
         /// <param name="fontStream">The font stream.</param>
         /// <returns>the description of the font just loaded.</returns>
         FontFamily Install(Stream fontStream);
+
+        /// <summary>
+        /// Removes all fonts from this collection.
+        /// </summary>
+        void Clear();
     }
 }

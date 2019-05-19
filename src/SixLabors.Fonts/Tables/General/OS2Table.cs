@@ -46,9 +46,7 @@ namespace SixLabors.Fonts.Tables.General
         private short superscriptYSize;
 
         public short TypoAscender { get; }
-
         public short TypoDescender { get; }
-
         public short TypoLineGap { get; }
 
         public static OS2Table Load(FontReader reader)
@@ -56,10 +54,7 @@ namespace SixLabors.Fonts.Tables.General
             using (BinaryReader r = reader.TryGetReaderAtTablePosition(TableName))
             {
                 if (r is null)
-                {
                     return null;
-                }
-
                 return Load(r);
             }
         }
@@ -132,7 +127,7 @@ namespace SixLabors.Fonts.Tables.General
             uint unicodeRange3 = reader.ReadUInt32(); // Bits 64–95
             uint unicodeRange4 = reader.ReadUInt32(); // Bits 96–127
             string tag = reader.ReadTag();
-            FontStyleSelection fontStyle = reader.ReadUInt16<FontStyleSelection>();
+            var fontStyle = reader.ReadUInt16<FontStyleSelection>();
             ushort firstCharIndex = reader.ReadUInt16();
             ushort lastCharIndex = reader.ReadUInt16();
             short typoAscender = reader.ReadInt16();
@@ -141,41 +136,39 @@ namespace SixLabors.Fonts.Tables.General
             ushort winAscent = reader.ReadUInt16();
             ushort winDescent = reader.ReadUInt16();
 
-            OS2Table version0Table = new OS2Table(
-                    averageCharWidth,
-                    weightClass,
-                    widthClass,
-                    styleType,
-                    subscriptXSize,
-                    subscriptYSize,
-                    subscriptXOffset,
-                    subscriptYOffset,
-                    superscriptXSize,
-                    superscriptYSize,
-                    superscriptXOffset,
-                    superscriptYOffset,
-                    strikeoutSize,
-                    strikeoutPosition,
-                    familyClass,
-                    panose,
-                    unicodeRange1,
-                    unicodeRange2,
-                    unicodeRange3,
-                    unicodeRange4,
-                    tag,
-                    fontStyle,
-                    firstCharIndex,
-                    lastCharIndex,
-                    typoAscender,
-                    typoDescender,
-                    typoLineGap,
-                    winAscent,
-                    winDescent);
+            var version0Table = new OS2Table(
+                averageCharWidth,
+                weightClass,
+                widthClass,
+                styleType,
+                subscriptXSize,
+                subscriptYSize,
+                subscriptXOffset,
+                subscriptYOffset,
+                superscriptXSize,
+                superscriptYSize,
+                superscriptXOffset,
+                superscriptYOffset,
+                strikeoutSize,
+                strikeoutPosition,
+                familyClass,
+                panose,
+                unicodeRange1,
+                unicodeRange2,
+                unicodeRange3,
+                unicodeRange4,
+                tag,
+                fontStyle,
+                firstCharIndex,
+                lastCharIndex,
+                typoAscender,
+                typoDescender,
+                typoLineGap,
+                winAscent,
+                winDescent);
 
             if (version == 0)
-            {
                 return version0Table;
-            }
 
             ushort codePageRange1 = reader.ReadUInt16();
             ushort codePageRange2 = reader.ReadUInt16();
@@ -185,20 +178,18 @@ namespace SixLabors.Fonts.Tables.General
             ushort breakChar = reader.ReadUInt16();
             ushort maxContext = reader.ReadUInt16();
 
-            OS2Table versionLessthan5Table = new OS2Table(
-                    version0Table,
-                    codePageRange1,
-                    codePageRange2,
-                    heightX,
-                    capHeight,
-                    defaultChar,
-                    breakChar,
-                    maxContext);
+            var versionLessthan5Table = new OS2Table(
+                version0Table,
+                codePageRange1,
+                codePageRange2,
+                heightX,
+                capHeight,
+                defaultChar,
+                breakChar,
+                maxContext);
 
             if (version < 5)
-            {
                 return versionLessthan5Table;
-            }
 
             ushort lowerOpticalPointSize = reader.ReadUInt16();
             ushort upperOpticalPointSize = reader.ReadUInt16();
@@ -209,7 +200,14 @@ namespace SixLabors.Fonts.Tables.General
                 upperOpticalPointSize);
         }
 
-        public OS2Table(short averageCharWidth, ushort weightClass, ushort widthClass, ushort styleType, short subscriptXSize, short subscriptYSize, short subscriptXOffset, short subscriptYOffset, short superscriptXSize, short superscriptYSize, short superscriptXOffset, short superscriptYOffset, short strikeoutSize, short strikeoutPosition, short familyClass, byte[] panose, uint unicodeRange1, uint unicodeRange2, uint unicodeRange3, uint unicodeRange4, string tag, FontStyleSelection fontStyle, ushort firstCharIndex, ushort lastCharIndex, short typoAscender, short typoDescender, short typoLineGap, ushort winAscent, ushort winDescent)
+        public OS2Table(
+            short averageCharWidth, ushort weightClass, ushort widthClass, ushort styleType,
+            short subscriptXSize, short subscriptYSize, short subscriptXOffset, short subscriptYOffset,
+            short superscriptXSize, short superscriptYSize, short superscriptXOffset, short superscriptYOffset,
+            short strikeoutSize, short strikeoutPosition, short familyClass, byte[] panose,
+            uint unicodeRange1, uint unicodeRange2, uint unicodeRange3, uint unicodeRange4, 
+            string tag, FontStyleSelection fontStyle, ushort firstCharIndex, ushort lastCharIndex,
+            short typoAscender, short typoDescender, short typoLineGap, ushort winAscent, ushort winDescent)
         {
             this.averageCharWidth = averageCharWidth;
             this.weightClass = weightClass;
@@ -242,8 +240,10 @@ namespace SixLabors.Fonts.Tables.General
             this.winDescent = winDescent;
         }
 
-        public OS2Table(OS2Table version0Table, ushort codePageRange1, ushort codePageRange2, short heightX, short capHeight, ushort defaultChar, ushort breakChar, ushort maxContext)
-            : this(
+        public OS2Table(
+            OS2Table version0Table, ushort codePageRange1, ushort codePageRange2, 
+            short heightX, short capHeight, ushort defaultChar, ushort breakChar, ushort maxContext) :
+            this(
                 version0Table.averageCharWidth,
                 version0Table.weightClass,
                 version0Table.widthClass,
@@ -283,8 +283,9 @@ namespace SixLabors.Fonts.Tables.General
             this.maxContext = maxContext;
         }
 
-        public OS2Table(OS2Table versionLessthan5Table, ushort lowerOpticalPointSize, ushort upperOpticalPointSize)
-            : this(
+        public OS2Table(
+            OS2Table versionLessthan5Table, ushort lowerOpticalPointSize, ushort upperOpticalPointSize) :
+            this(
                 versionLessthan5Table,
                 versionLessthan5Table.codePageRange1,
                 versionLessthan5Table.codePageRange2,

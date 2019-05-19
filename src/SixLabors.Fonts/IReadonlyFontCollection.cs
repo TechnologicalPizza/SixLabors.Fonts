@@ -20,6 +20,16 @@ namespace SixLabors.Fonts
         IEnumerable<FontFamily> Families { get; }
 
         /// <summary>
+        /// Gets the number of font families.
+        /// </summary>
+        int FamilyCount { get; }
+
+        /// <summary>
+        /// Gets the number of font instances.
+        /// </summary>
+        int InstanceCount { get; }
+
+        /// <summary>
         /// Finds the specified font family.
         /// </summary>
         /// <param name="fontFamily">The font family.</param>

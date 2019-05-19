@@ -4,9 +4,8 @@
 namespace SixLabors.Fonts.Exceptions
 {
     /// <summary>
-    /// Base class for exceptions thrown by this library.
+    /// The exception that is thrown when trying to get a font family that could not be found.
     /// </summary>
-    /// <seealso cref="System.Exception" />
     public class FontFamilyNotFoundException : FontException
     {
         /// <summary>
@@ -20,7 +19,7 @@ namespace SixLabors.Fonts.Exceptions
         }
 
         /// <summary>
-        /// Gets the name of the font familiy we failed to find.
+        /// Gets the name of the font familiy that could not be found.
         /// </summary>
         public string FontFamily { get; }
     }

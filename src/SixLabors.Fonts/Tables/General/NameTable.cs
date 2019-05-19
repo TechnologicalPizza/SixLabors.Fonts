@@ -72,10 +72,10 @@ namespace SixLabors.Fonts.Tables.General
         internal NameTable(NameRecord[] names, string[] languages)
         {
             this.names = names;
-            this.FontFamilyName = this.GetNameById(NameIds.FontFamilyName);
-            this.FontSubFamilyName = this.GetNameById(NameIds.FontSubfamilyName);
-            this.Id = this.GetNameById(NameIds.UniqueFontID);
-            this.FontName = this.GetNameById(NameIds.FullFontName);
+            this.FontFamilyName = this.GetNameById(NameID.FontFamilyName);
+            this.FontSubFamilyName = this.GetNameById(NameID.FontSubfamilyName);
+            this.Id = this.GetNameById(NameID.UniqueFontID);
+            this.FontName = this.GetNameById(NameID.FullFontName);
         }
 
         /// <summary>
@@ -110,11 +110,11 @@ namespace SixLabors.Fonts.Tables.General
         /// </value>
         public string FontSubFamilyName { get; }
 
-        public string GetNameById(NameIds nameId)
+        public string GetNameById(NameID nameId)
         {
             foreach (NameRecord name in this.names)
             {
-                if (name.Platform == PlatformIDs.Windows && name.LanguageID == 0x0409)
+                if (name.Platform == PlatformEncodingID.Windows && name.LanguageID == 0x0409)
                 {
                     if (name.NameID == nameId)
                     {
@@ -125,7 +125,7 @@ namespace SixLabors.Fonts.Tables.General
 
             foreach (NameRecord name in this.names)
             {
-                if (name.Platform == PlatformIDs.Windows)
+                if (name.Platform == PlatformEncodingID.Windows)
                 {
                     if (name.NameID == nameId)
                     {
@@ -147,7 +147,7 @@ namespace SixLabors.Fonts.Tables.General
 
         public string GetNameById(ushort nameId)
         {
-            return this.GetNameById((NameIds)nameId);
+            return this.GetNameById((NameID)nameId);
         }
     }
 }

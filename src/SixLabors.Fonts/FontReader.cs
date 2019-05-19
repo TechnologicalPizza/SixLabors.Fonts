@@ -22,7 +22,7 @@ namespace SixLabors.Fonts
             this.loader = loader;
 
             Func<BinaryReader, TableHeader> loadHeader = TableHeader.Read;
-            long startOfFilePosition = stream.Position;
+            //long startOfFilePosition = stream.Position;
 
             this.stream = stream;
             var reader = new BinaryReader(stream, true);
@@ -39,7 +39,7 @@ namespace SixLabors.Fonts
                 // UInt32 | length         | Total size of the WOFF file.
                 // UInt16 | numTables      | Number of entries in directory of font tables.
                 // UInt16 | reserved       | Reserved; set to zero.
-                // UInt32 | totalSfntSize  | Total size needed for the uncompressed font data, including the sfnt header, directory, and font tables(including padding).
+                // UInt32 | totalSfntSize  | Total size needed for the uncompressed font data, including the sfnt header, directory, and font tables (including padding).
                 // UInt16 | majorVersion   | Major version of the WOFF file.
                 // UInt16 | minorVersion   | Minor version of the WOFF file.
                 // UInt32 | metaOffset     | Offset to metadata block, from beginning of WOFF file.
@@ -75,7 +75,7 @@ namespace SixLabors.Fonts
             }
 
             if (this.OutlineType != OutlineTypes.TrueType)
-                throw new Exceptions.InvalidFontFileException("Invalid glyph format, only TTF glyph outlines supported.");
+                throw new  InvalidFontFileException("Invalid glyph format, only TTF glyph outlines supported.");
 
             var headers = new Dictionary<string, TableHeader>(tableCount);
             for (int i = 0; i < tableCount; i++)
@@ -87,8 +87,7 @@ namespace SixLabors.Fonts
             this.Headers = new ReadOnlyDictionary<string, TableHeader>(headers);
         }
 
-        public FontReader(Stream stream)
-            : this(stream, TableLoader.Default)
+        public FontReader(Stream stream) : this(stream, TableLoader.Default)
         {
         }
 
@@ -108,7 +107,6 @@ namespace SixLabors.Fonts
             else
             {
                 table = this.loader.Load<TTableType>(this);
-
                 this.loadedTables.Add(typeof(TTableType), table);
             }
 
@@ -117,9 +115,9 @@ namespace SixLabors.Fonts
 
         public TableHeader GetHeader(string tag)
         {
-            return this.Headers.TryGetValue(tag, out TableHeader header)
-                ? header
-                : null;
+            if (this.Headers.TryGetValue(tag, out TableHeader header))
+                return header;
+            return null;
         }
 
         public BinaryReader GetReaderAtTablePosition(string tableName)
@@ -127,7 +125,6 @@ namespace SixLabors.Fonts
             var reader = this.TryGetReaderAtTablePosition(tableName);
             if (reader == null)
                 throw new InvalidFontTableException("Unable to find table", tableName);
-
             return reader;
         }
 

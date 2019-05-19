@@ -8,19 +8,13 @@ namespace SixLabors.Fonts
     public interface IFontInstance
     {
         FontDescription Description { get; }
-
-        ushort EmSize { get; }
-
+        ushort UnitsPerEm { get; }
         int LineHeight { get; }
-
         short Ascender { get; }
-
         short Descender { get; }
-
         short LineGap { get; }
 
         GlyphInstance GetGlyph(int codePoint);
-
         Vector2 GetOffset(GlyphInstance glyph, GlyphInstance previousGlyph);
     }
 }

@@ -58,9 +58,7 @@ namespace SixLabors.Fonts
         {
             // if begin offsert the offset by the start of stream postion
             if (origin == SeekOrigin.Begin)
-            {
                 offset += this.StartOfStream;
-            }
 
             this.BaseStream.Seek(offset, origin);
         }
@@ -101,14 +99,12 @@ namespace SixLabors.Fonts
         public bool ReadBoolean()
         {
             this.ReadInternal(this.buffer, 1);
-
             return BitConverter.ToBoolean(this.buffer, 0);
         }
 
         public float ReadF2dot14()
         {
             const float F2Dot14ToFloat = 16384.0f;
-
             return this.ReadInt16() / F2Dot14ToFloat;
         }
 
@@ -124,8 +120,7 @@ namespace SixLabors.Fonts
             return BinaryPrimitives.ReadInt16BigEndian(this.buffer);
         }
 
-        public TEnum ReadInt16<TEnum>()
-            where TEnum : Enum
+        public TEnum ReadInt16<TEnum>() where TEnum : Enum
         {
             return CastTo<TEnum>.From(this.ReadInt16());
         }
@@ -148,9 +143,7 @@ namespace SixLabors.Fonts
         public float ReadFixed()
         {
             this.ReadInternal(this.buffer, 4);
-
             int value = BinaryPrimitives.ReadInt32BigEndian(this.buffer);
-
             return Unsafe.As<int, float>(ref value);
         }
 
@@ -162,7 +155,6 @@ namespace SixLabors.Fonts
         public long ReadInt64()
         {
             this.ReadInternal(this.buffer, 8);
-
             return BinaryPrimitives.ReadInt64BigEndian(this.buffer);
         }
 
@@ -174,7 +166,6 @@ namespace SixLabors.Fonts
         public ushort ReadUInt16()
         {
             this.ReadInternal(this.buffer, 2);
-
             return BinaryPrimitives.ReadUInt16BigEndian(this.buffer);
         }
 
@@ -193,12 +184,12 @@ namespace SixLabors.Fonts
         /// </returns>
         public ushort[] ReadUInt16Array(int length)
         {
+            if (length == 0)
+                return Array.Empty<ushort>();
+
             ushort[] data = new ushort[length];
             for (int i = 0; i < length; i++)
-            {
                 data[i] = this.ReadUInt16();
-            }
-
             return data;
         }
 
@@ -212,12 +203,12 @@ namespace SixLabors.Fonts
         /// </returns>
         public uint[] ReadUInt32Array(int length)
         {
+            if (length == 0)
+                return Array.Empty<uint>();
+
             uint[] data = new uint[length];
             for (int i = 0; i < length; i++)
-            {
                 data[i] = this.ReadUInt32();
-            }
-
             return data;
         }
 
@@ -249,22 +240,23 @@ namespace SixLabors.Fonts
 
         public byte[] ReadUInt8Array(int length)
         {
+            if(length == 0)
+                return Array.Empty<byte>();
+
             byte[] data = new byte[length];
-
             this.ReadInternal(data, length);
-
             return data;
         }
 
         public TEnum[] ReadUInt8Array<TEnum>(int length)
              where TEnum : Enum
         {
+            if (length == 0)
+                return Array.Empty<TEnum>();
+
             TEnum[] data = new TEnum[length];
             for (int i = 0; i < length; i++)
-            {
                 data[i] = CastTo<TEnum>.From(this.ReadUInt8());
-            }
-
             return data;
         }
 
@@ -278,12 +270,12 @@ namespace SixLabors.Fonts
         /// </returns>
         public short[] ReadInt16Array(int length)
         {
+            if (length == 0)
+                return Array.Empty<short>();
+
             short[] data = new short[length];
             for (int i = 0; i < length; i++)
-            {
                 data[i] = this.ReadInt16();
-            }
-
             return data;
         }
 
@@ -306,7 +298,6 @@ namespace SixLabors.Fonts
         public uint ReadUInt32()
         {
             this.ReadInternal(this.buffer, 4);
-
             return BinaryPrimitives.ReadUInt32BigEndian(this.buffer);
         }
 
@@ -334,7 +325,6 @@ namespace SixLabors.Fonts
         public float ReadSingle()
         {
             uint value = this.ReadUInt32();
-
             return Unsafe.As<uint, float>(ref value);
         }
 
@@ -355,15 +345,12 @@ namespace SixLabors.Fonts
             {
                 int block = this.BaseStream.Read(buffer, index, count);
                 if (block == 0)
-                {
                     return read;
-                }
 
                 index += block;
                 read += block;
                 count -= block;
             }
-
             return read;
         }
 
@@ -376,6 +363,9 @@ namespace SixLabors.Fonts
         /// <returns>The bytes read</returns>
         public byte[] ReadBytes(int count)
         {
+            if (count == 0)
+                return Array.Empty<byte>();
+
             byte[] ret = new byte[count];
             int index = 0;
             while (index < count)
@@ -385,11 +375,13 @@ namespace SixLabors.Fonts
                 // Stream has finished half way through. That's fine, return what we've got.
                 if (read == 0)
                 {
+                    if (read == 0)
+                        return Array.Empty<byte>();
+
                     byte[] copy = new byte[index];
                     Buffer.BlockCopy(ret, 0, copy, 0, index);
                     return copy;
                 }
-
                 index += read;
             }
 
@@ -408,6 +400,9 @@ namespace SixLabors.Fonts
         /// </returns>
         public string ReadString(int bytesToRead, Encoding encoding)
         {
+            if (bytesToRead == 0)
+                return string.Empty;
+
             var data = new byte[bytesToRead];
             this.ReadInternal(data, bytesToRead);
             return encoding.GetString(data, 0, data.Length);
@@ -420,7 +415,6 @@ namespace SixLabors.Fonts
         public string ReadTag()
         {
             this.ReadInternal(this.buffer, 4);
-
             return Encoding.UTF8.GetString(this.buffer, 0, 4);
         }
 
@@ -433,50 +427,43 @@ namespace SixLabors.Fonts
         private void ReadInternal(byte[] data, int size)
         {
             int index = 0;
-
             while (index < size)
             {
                 int read = this.BaseStream.Read(data, index, size - index);
                 if (read == 0)
-                {
                     throw new EndOfStreamException($"End of stream reached with {size - index} byte{(size - index == 1 ? "s" : string.Empty)} left to read.");
-                }
-
+                
                 index += read;
             }
         }
 
-        /// <summary>
-        /// Reads the given number of bytes from the stream if possible, returning
-        /// the number of bytes actually read, which may be less than requested if
-        /// (and only if) the end of the stream is reached.
-        /// </summary>
-        /// <param name="data">Buffer to read into</param>
-        /// <param name="size">Number of bytes to read</param>
-        /// <returns>Number of bytes actually read</returns>
-        private int TryReadInternal(byte[] data, int size)
-        {
-            int index = 0;
-            while (index < size)
-            {
-                int read = this.BaseStream.Read(data, index, size - index);
-                if (read == 0)
-                {
-                    return index;
-                }
-
-                index += read;
-            }
-
-            return index;
-        }
+        // /// <summary>
+        // /// Reads the given number of bytes from the stream if possible, returning
+        // /// the number of bytes actually read, which may be less than requested if
+        // /// (and only if) the end of the stream is reached.
+        // /// </summary>
+        // /// <param name="data">Buffer to read into</param>
+        // /// <param name="size">Number of bytes to read</param>
+        // /// <returns>Number of bytes actually read</returns>
+        // private int TryReadInternal(byte[] data, int size)
+        // {
+        //     int index = 0;
+        //     while (index < size)
+        //     {
+        //         int read = this.BaseStream.Read(data, index, size - index);
+        //         if (read == 0)
+        //             return index;
+        //         
+        //         index += read;
+        //     }
+        // 
+        //     return index;
+        // }
 
         public void Dispose()
         {
             if (!this.leaveOpen)
-            {
                 this.BaseStream?.Dispose();
-            }
         }
 
         /// <summary>
@@ -494,7 +481,7 @@ namespace SixLabors.Fonts
             /// <param name="s">The s.</param>
             public static TTarget From<TSource>(TSource s)
             {
-                return Cache<TSource>.Caster(s);
+                return Cache<TSource>.Caster.Invoke(s);
             }
 
             private static class Cache<TSource>

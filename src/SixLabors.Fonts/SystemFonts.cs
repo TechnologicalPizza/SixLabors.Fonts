@@ -11,7 +11,7 @@ namespace SixLabors.Fonts
     /// </summary>
     public static class SystemFonts
     {
-        private static Lazy<SystemFontCollection> lazySystemFonts = new Lazy<SystemFontCollection>(() => new SystemFontCollection());
+        private static Lazy<SystemFontCollection> _lazySystemFonts = new Lazy<SystemFontCollection>(() => new SystemFontCollection());
 
         /// <summary>
         /// Gets the collection hosting the globably installled system fonts.
@@ -19,7 +19,7 @@ namespace SixLabors.Fonts
         /// <value>
         /// The system fonts.
         /// </value>
-        public static IReadOnlyFontCollection Collection => lazySystemFonts.Value;
+        public static IReadOnlyFontCollection Collection => _lazySystemFonts.Value;
 
         /// <summary>
         /// Gets the collection of <see cref="FontFamily"/>s installed on current system.
@@ -28,6 +28,15 @@ namespace SixLabors.Fonts
         /// The families.
         /// </value>
         public static IEnumerable<FontFamily> Families => Collection.Families;
+
+        /// <summary>
+        /// Reloads the system fonts. Use this to access fonts that were modified while the application is running.
+        /// </summary>
+        public static void Reload()
+        {
+            if (_lazySystemFonts.IsValueCreated)
+                _lazySystemFonts.Value.Load();
+        }
 
         /// <summary>
         /// Finds the specified font family from the system font store.

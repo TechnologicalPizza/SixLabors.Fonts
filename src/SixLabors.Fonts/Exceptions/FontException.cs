@@ -15,8 +15,7 @@ namespace SixLabors.Fonts.Exceptions
         /// Initializes a new instance of the <see cref="FontException"/> class.
         /// </summary>
         /// <param name="message">The message that describes the error.</param>
-        public FontException(string message)
-            : base(message)
+        public FontException(string message) : base(message)
         {
         }
     }

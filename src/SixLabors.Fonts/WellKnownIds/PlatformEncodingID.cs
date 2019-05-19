@@ -6,7 +6,7 @@ namespace SixLabors.Fonts.WellKnownIds
     /// <summary>
     /// platforms ids
     /// </summary>
-    internal enum PlatformIDs : ushort
+    internal enum PlatformEncodingID : ushort
     {
         /// <summary>
         /// Unicode platform
@@ -24,7 +24,7 @@ namespace SixLabors.Fonts.WellKnownIds
         ISO = 2,
 
         /// <summary>
-        /// Window encoding
+        /// Windows encoding
         /// </summary>
         Windows = 3,
 

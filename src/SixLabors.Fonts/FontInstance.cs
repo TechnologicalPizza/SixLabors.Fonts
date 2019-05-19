@@ -1,7 +1,6 @@
 ﻿// Copyright (c) Six Labors and contributors.
 // Licensed under the Apache License, Version 2.0.
 
-using System;
 using System.IO;
 using System.Numerics;
 using SixLabors.Fonts.Tables.General;
@@ -10,7 +9,7 @@ using SixLabors.Fonts.Tables.General.Glyphs;
 namespace SixLabors.Fonts
 {
     /// <summary>
-    /// provide metadata about a font.
+    /// Provides metadata about a font.
     /// </summary>
     public class FontInstance : IFontInstance
     {
@@ -23,27 +22,34 @@ namespace SixLabors.Fonts
         private readonly KerningTable kerning;
 
         /// <summary>
+        /// The description of the font including font name, family name and style.
+        /// </summary>
+        public FontDescription Description { get; }
+
+        /// <summary>
         /// Gets the height of the line.
         /// </summary>
-        /// <value>
-        /// The height of the line.
-        /// </value>
-        public int LineHeight { get; }
+        public int LineHeight => os2.TypoAscender - os2.TypoDescender + os2.TypoLineGap;
 
         /// <summary>
         /// Gets the ascender.
         /// </summary>
-        public short Ascender { get; }
+        public short Ascender => os2.TypoAscender;
 
         /// <summary>
         /// Gets the descender.
         /// </summary>
-        public short Descender { get; }
+        public short Descender => os2.TypoDescender;
 
         /// <summary>
         /// Gets the line gap.
         /// </summary>
-        public short LineGap { get; }
+        public short LineGap => os2.TypoLineGap;
+
+        /// <summary>
+        /// Gets the amount of units per em.
+        /// </summary>
+        public ushort UnitsPerEm => this.head.UnitsPerEm;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="FontInstance"/> class.
@@ -55,42 +61,24 @@ namespace SixLabors.Fonts
         /// <param name="horizontalMetrics">The horizontal metrics.</param>
         /// <param name="head">The head.</param>
         /// <param name="kern">The kern.</param>
-        internal FontInstance(NameTable nameTable, CMapTable cmap, GlyphTable glyphs, OS2Table os2, HorizontalMetricsTable horizontalMetrics, HeadTable head, KerningTable kern)
+        internal FontInstance(
+            NameTable nameTable, CMapTable cmap, GlyphTable glyphs, OS2Table os2,
+            HorizontalMetricsTable horizontalMetrics, HeadTable head, KerningTable kern)
         {
             this.cmap = cmap;
-            this.os2 = os2;
             this.glyphs = glyphs;
+            this.os2 = os2;
             this.horizontalMetrics = horizontalMetrics;
             this.head = head;
             this.glyphCache = new GlyphInstance[this.glyphs.GlyphCount];
 
             // https://www.microsoft.com/typography/otspec/recom.htm#tad
-            this.LineHeight = os2.TypoAscender - os2.TypoDescender + os2.TypoLineGap;
-            this.Ascender = os2.TypoAscender;
-            this.Descender = os2.TypoDescender;
-            this.LineGap = os2.TypoLineGap;
-            this.EmSize = this.head.UnitsPerEm;
             this.kerning = kern;
             this.Description = new FontDescription(nameTable, os2, head);
         }
 
-        /// <summary>
-        /// Gets the size of the em.
-        /// </summary>
-        /// <value>
-        /// The size of the em.
-        /// </value>
-        public ushort EmSize { get; }
-
-        public FontDescription Description { get; }
-
         internal ushort GetGlyphIndex(int codePoint)
         {
-            if (codePoint > ushort.MaxValue)
-            {
-                throw new NotImplementedException("cmap table doesn't support 32-bit characters yet.");
-            }
-
             return this.cmap.GetGlyphId(codePoint);
         }
 
@@ -107,9 +95,8 @@ namespace SixLabors.Fonts
                 ushort advanceWidth = this.horizontalMetrics.GetAdvancedWidth(idx);
                 short lsb = this.horizontalMetrics.GetLeftSideBearing(idx);
                 GlyphVector vector = this.glyphs.GetGlyph(idx);
-                this.glyphCache[idx] = new GlyphInstance(this, vector.ControlPoints, vector.OnCurves, vector.EndPoints, vector.Bounds, advanceWidth, lsb, this.EmSize, idx);
+                this.glyphCache[idx] = new GlyphInstance(this, vector.ControlPoints, vector.OnCurves, vector.EndPoints, vector.Bounds, advanceWidth, lsb, this.UnitsPerEm, idx);
             }
-
             return this.glyphCache[idx];
         }
 
@@ -158,24 +145,24 @@ namespace SixLabors.Fonts
         {
             // https://www.microsoft.com/typography/otspec/recom.htm#TableOrdering
             // recomended order
-            HeadTable head = reader.GetTable<HeadTable>(); // head - not saving but loading in suggested order
+            var head = reader.GetTable<HeadTable>(); // head - not saving but loading in suggested order
             reader.GetTable<HorizontalHeadTable>(); // hhea
             reader.GetTable<MaximumProfileTable>(); // maxp
-            OS2Table os2 = reader.GetTable<OS2Table>(); // OS/2
-            HorizontalMetricsTable horizontalMetrics = reader.GetTable<HorizontalMetricsTable>(); // hmtx
+            var os2 = reader.GetTable<OS2Table>(); // OS/2
+            var horizontalMetrics = reader.GetTable<HorizontalMetricsTable>(); // hmtx
 
             // LTSH - Linear threshold data
             // VDMX - Vertical device metrics
             // hdmx - Horizontal device metrics
-            CMapTable cmap = reader.GetTable<CMapTable>(); // cmap
+            var cmap = reader.GetTable<CMapTable>(); // cmap
 
             // fpgm - Font Program
             // prep - Control Value Program
             // cvt  - Control Value Table
             reader.GetTable<IndexLocationTable>(); // loca
-            GlyphTable glyphs = reader.GetTable<GlyphTable>(); // glyf
-            KerningTable kern = reader.GetTable<KerningTable>(); // kern - Kerning
-            NameTable nameTable = reader.GetTable<NameTable>(); // name
+            var glyphs = reader.GetTable<GlyphTable>(); // glyf
+            var kern = reader.GetTable<KerningTable>(); // kern - Kerning
+            var nameTable = reader.GetTable<NameTable>(); // name
 
             // post - PostScript information
             // gasp - Grid-fitting/Scan-conversion (optional table)

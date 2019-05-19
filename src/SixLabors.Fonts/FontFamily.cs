@@ -48,9 +48,9 @@ namespace SixLabors.Fonts
         /// <returns>
         ///   <c>true</c> if the specified <see cref="FontStyle"/> is available; otherwise, <c>false</c>.
         /// </returns>
-        public bool IsStyleAvailable(FontStyle style) => this.AvailableStyles.Contains(style);
+        public bool ContainsStyle(FontStyle style) => this.AvailableStyles.Contains(style);
 
-        internal FontStyle DefaultStyle => this.IsStyleAvailable(FontStyle.Regular) ? FontStyle.Regular : this.AvailableStyles.First();
+        internal FontStyle DefaultStyle => this.ContainsStyle(FontStyle.Regular) ? FontStyle.Regular : this.AvailableStyles.First();
 
         internal IFontInstance Find(FontStyle style)
         {

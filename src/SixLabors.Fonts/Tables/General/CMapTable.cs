@@ -14,9 +14,9 @@ namespace SixLabors.Fonts.Tables.General
         private const string TableName = "cmap";
         private readonly CMapSubTable table;
 
-        internal CMapSubTable[] Tables { get; }
+        internal List<CMapSubTable> Tables { get; }
 
-        public CMapTable(CMapSubTable[] tables)
+        public CMapTable(List<CMapSubTable> tables)
         {
             this.Tables = tables;
 
@@ -26,17 +26,14 @@ namespace SixLabors.Fonts.Tables.General
             {
                 if (t != null)
                 {
-                    if (t.Platform == PlatformIDs.Windows)
+                    if (t.Platform == PlatformEncodingID.Windows)
                     {
                         ushort format = table?.Format ?? 0;
                         if (t.Format > format)
-                        {
                             table = t;
-                        }
                     }
                 }
             }
-
             this.table = table;
         }
 
@@ -44,9 +41,7 @@ namespace SixLabors.Fonts.Tables.General
         {
             // use the best match only
             if (this.table != null)
-            {
                 return this.table.GetGlyphId(codePoint);
-            }
 
             // didn't have a windows match just use any and hope for the best
             foreach (CMapSubTable t in this.Tables)
@@ -54,9 +49,7 @@ namespace SixLabors.Fonts.Tables.General
                 // keep looking until we have an index thats not the fallback.
                 ushort index = t.GetGlyphId(codePoint);
                 if (index > 0)
-                {
                     return index;
-                }
             }
 
             return 0;
@@ -65,9 +58,7 @@ namespace SixLabors.Fonts.Tables.General
         public static CMapTable Load(FontReader reader)
         {
             using (BinaryReader binaryReader = reader.GetReaderAtTablePosition(TableName))
-            {
                 return Load(binaryReader);
-            }
         }
 
         public static CMapTable Load(BinaryReader reader)
@@ -81,7 +72,7 @@ namespace SixLabors.Fonts.Tables.General
 
             // foreach encoding we move forward looking for th subtables
             var tables = new List<CMapSubTable>(numTables);
-            foreach (IGrouping<uint, EncodingRecord> encoding in encodings.Where(x => x.PlatformID == PlatformIDs.Windows).GroupBy(x => x.Offset))
+            foreach (IGrouping<uint, EncodingRecord> encoding in encodings.Where(x => x.PlatformID == PlatformEncodingID.Windows).GroupBy(x => x.Offset))
             {
                 reader.Seek(encoding.Key, System.IO.SeekOrigin.Begin);
 
@@ -98,7 +89,7 @@ namespace SixLabors.Fonts.Tables.General
                 }
             }
 
-            return new CMapTable(tables.ToArray());
+            return new CMapTable(tables);
         }
     }
 }

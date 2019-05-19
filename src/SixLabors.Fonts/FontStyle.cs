@@ -29,7 +29,7 @@ namespace SixLabors.Fonts
         /// <summary>
         /// Bold and Italic
         /// </summary>
-        BoldItalic = 3,
+        BoldItalic = Bold | Italic,
 
         // not yet supported
         // Underline = 4,

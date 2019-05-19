@@ -92,14 +92,14 @@ namespace SixLabors.Fonts
                 {
                     // get the larget lineheight thus far
                     unscaledLineHeight = spanStyle.Font.LineHeight;
-                    scale = spanStyle.Font.EmSize * 72;
+                    scale = spanStyle.Font.UnitsPerEm * 72;
                     lineHeight = (unscaledLineHeight * spanStyle.PointSize) / scale;
                 }
 
                 if (spanStyle.Font.Ascender > unscaledLineMaxAscender)
                 {
                     unscaledLineMaxAscender = spanStyle.Font.Ascender;
-                    scale = spanStyle.Font.EmSize * 72;
+                    scale = spanStyle.Font.UnitsPerEm * 72;
                     lineMaxAscender = (unscaledLineMaxAscender * spanStyle.PointSize) / scale;
                 }
 

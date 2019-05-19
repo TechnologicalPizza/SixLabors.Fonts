@@ -14,15 +14,8 @@ namespace SixLabors.Fonts
     /// </summary>
     public sealed class FontCollection : IFontCollection
     {
-        private readonly Dictionary<string, List<IFontInstance>> instances = new Dictionary<string, List<IFontInstance>>(StringComparer.OrdinalIgnoreCase);
-        private readonly Dictionary<string, FontFamily> families = new Dictionary<string, FontFamily>(StringComparer.OrdinalIgnoreCase);
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref="FontCollection"/> class.
-        /// </summary>
-        public FontCollection()
-        {
-        }
+        private readonly Dictionary<string, List<IFontInstance>> _instances;
+        private readonly Dictionary<string, FontFamily> _families;
 
         /// <summary>
         /// Gets the collection of <see cref="FontFamily"/> objects associated with this <see cref="FontCollection"/>.
@@ -30,7 +23,41 @@ namespace SixLabors.Fonts
         /// <value>
         /// The families.
         /// </value>
-        public IEnumerable<FontFamily> Families => this.families.Values;
+        public IEnumerable<FontFamily> Families => this._families.Values;
+
+        /// <inheritdoc/>
+        public int FamilyCount => this._families.Count;
+
+        /// <inheritdoc/>
+        public int InstanceCount
+        {
+            get
+            {
+                int count = 0;
+                foreach (var list in _instances.Values)
+                    foreach (var instance in list)
+                        count++;
+                return count;
+            }
+        }
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="FontCollection"/> class
+        /// with the specified <see cref="IEqualityComparer{T}"/> for comparing names.
+        /// </summary>
+        public FontCollection(IEqualityComparer<string> nameComparer)
+        {
+            _instances = new Dictionary<string, List<IFontInstance>>(nameComparer);
+            _families = new Dictionary<string, FontFamily>(nameComparer);
+        }
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="FontCollection"/> class
+        /// with <see cref="StringComparer.OrdinalIgnoreCase"/> for comparing names.
+        /// </summary>
+        public FontCollection() : this(StringComparer.OrdinalIgnoreCase)
+        {
+        }
 
         /// <summary>
         /// Installs a font from the specified path.
@@ -73,9 +100,8 @@ namespace SixLabors.Fonts
         /// <returns>the description of the font just loaded.</returns>
         public FontFamily Install(Stream fontStream, out FontDescription fontDescription)
         {
-            FontInstance instance = FontInstance.LoadFont(fontStream);
+            var instance = FontInstance.LoadFont(fontStream);
             fontDescription = instance.Description;
-
             return this.Install(instance);
         }
 
@@ -87,10 +113,7 @@ namespace SixLabors.Fonts
         public FontFamily Find(string fontFamily)
         {
             if (this.TryFind(fontFamily, out FontFamily result))
-            {
                 return result;
-            }
-
             throw new FontFamilyNotFoundException(fontFamily);
         }
 
@@ -102,57 +125,57 @@ namespace SixLabors.Fonts
         /// <returns>true if a font of that family has been installed into the font collection.</returns>
         public bool TryFind(string fontFamily, out FontFamily family)
         {
-            return this.families.TryGetValue(fontFamily, out family);
+            return this._families.TryGetValue(fontFamily, out family);
+        }
+
+        /// <inheritdoc/>
+        public void Clear()
+        {
+            lock (this._instances)
+            {
+                _instances.Clear();
+                _families.Clear();
+            }
         }
 
         internal IEnumerable<FontStyle> AvailableStyles(string fontFamily)
         {
-            return this.FindAll(fontFamily).Select(x => x.Description.Style).ToArray();
+            return this.FindAll(fontFamily).Select(x => x.Description.Style);
         }
 
         internal FontFamily Install(IFontInstance instance)
         {
             if (instance == null)
-            {
                 throw new ArgumentNullException(nameof(instance));
-            }
 
             if (instance.Description == null)
+                throw new ArgumentException("Must have a non-null Description.", nameof(instance));
+
+            lock (this._instances)
             {
-                throw new ArgumentException("IFontInstance must have a Description.", nameof(instance));
+                if (!this._instances.ContainsKey(instance.Description.FontFamily))
+                    this._instances.Add(instance.Description.FontFamily, new List<IFontInstance>());
+
+                if (!this._families.ContainsKey(instance.Description.FontFamily))
+                    this._families.Add(instance.Description.FontFamily, new FontFamily(instance.Description.FontFamily, this));
+
+                this._instances[instance.Description.FontFamily].Add(instance);
             }
 
-            lock (this.instances)
-            {
-                if (!this.instances.ContainsKey(instance.Description.FontFamily))
-                {
-                    this.instances.Add(instance.Description.FontFamily, new List<IFontInstance>(4));
-                }
-
-                if (!this.families.ContainsKey(instance.Description.FontFamily))
-                {
-                    this.families.Add(instance.Description.FontFamily, new FontFamily(instance.Description.FontFamily, this));
-                }
-
-                this.instances[instance.Description.FontFamily].Add(instance);
-            }
-
-            return this.families[instance.Description.FontFamily];
+            return this._families[instance.Description.FontFamily];
         }
 
         internal IFontInstance Find(string fontFamily, FontStyle style)
         {
-            return this.instances.TryGetValue(fontFamily, out List<IFontInstance> inFamily)
-                ? inFamily.FirstOrDefault(x => x.Description.Style == style)
-                : null;
+            return this._instances.TryGetValue(fontFamily, out List<IFontInstance> inFamily) ?
+                inFamily.FirstOrDefault(x => x.Description.Style == style) : null;
         }
 
         internal IEnumerable<IFontInstance> FindAll(string name)
         {
             // once we have to support verient fonts then we
-            return this.instances.TryGetValue(name, out List<IFontInstance> value)
-                ? value
-                : Enumerable.Empty<IFontInstance>();
+            return this._instances.TryGetValue(name, out List<IFontInstance> value) ?
+                value : Enumerable.Empty<IFontInstance>();
         }
     }
 }

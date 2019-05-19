@@ -16,12 +16,12 @@ namespace SixLabors.Fonts.Utilities
         /// </summary>
         /// <param name="id">The identifier.</param>
         /// <returns>the encoding for this encoding ID</returns>
-        public static Encoding AsEncoding(this EncodingIDs id)
+        public static Encoding AsEncoding(this EncodingID id)
         {
             switch (id)
             {
-                case EncodingIDs.Unicode11:
-                case EncodingIDs.Unicode2:
+                case EncodingID.Unicode11:
+                case EncodingID.Unicode2:
                     return Encoding.BigEndianUnicode;
                 default:
                     return Encoding.UTF8;
