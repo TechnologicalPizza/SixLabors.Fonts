@@ -125,7 +125,8 @@ namespace SixLabors.Fonts
                 }
 
                 bool hasFourBytes = char.IsHighSurrogate(text[i]);
-                int codePoint = hasFourBytes ? char.ConvertToUtf32(text[i], text[i + 1]) : text[i];
+                int codePoint = hasFourBytes ?
+                    (i + 1 < text.Length ? char.ConvertToUtf32(text[i], text[i + 1]) : 0) : text[i];
 
                 GlyphInstance glyph = spanStyle.Font.GetGlyph(codePoint);
                 float glyphWidth = (glyph.AdvanceWidth * spanStyle.PointSize) / scale;
@@ -192,9 +193,7 @@ namespace SixLabors.Fonts
 
                     float bottom = location.Y + lineHeight;
                     if (bottom > totalHeight)
-                    {
                         totalHeight = bottom;
-                    }
 
                     previousGlyph = glyph;
                 }
@@ -227,17 +226,13 @@ namespace SixLabors.Fonts
                     float finalWidth = 0;
 
                     if (tabStop > 0)
-                    {
                         finalWidth = tabStop - (location.X % tabStop);
-                    }
-
+                    
                     if (finalWidth < glyphWidth)
-                    {
                         // if we are not going to tab atleast a glyph width add another tabstop to it ???
                         // should I be doing this?
                         finalWidth += tabStop;
-                    }
-
+                    
                     output.Add(new GlyphLayout(codePoint, new Glyph(glyph, spanStyle.PointSize), location, finalWidth, glyphHeight, lineHeight, startOfLine, true, false));
                     startOfLine = false;
 
@@ -267,7 +262,7 @@ namespace SixLabors.Fonts
                     offset += new Vector2(0, -totalHeight);
                     break;
 
-                case VerticalAlignment.Top:
+                //case VerticalAlignment.Top:
                 default:
                     // no change
                     break;
@@ -302,7 +297,7 @@ namespace SixLabors.Fonts
                             lineOffset = new Vector2(originX - (width / 2f), 0) + offset;
                             break;
 
-                        case HorizontalAlignment.Left:
+                        //case HorizontalAlignment.Left:
                         default:
                             lineOffset = new Vector2(originX, 0) + offset;
                             break;
