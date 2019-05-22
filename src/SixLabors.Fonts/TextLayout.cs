@@ -5,16 +5,17 @@ using System;
 using System.Collections.Generic;
 using System.Numerics;
 using System.Text;
+using SixLabors.Fonts.Utilities;
 using SixLabors.Primitives;
 
 namespace SixLabors.Fonts
 {
     /// <summary>
-    /// Encapsulated logic or laying out text.
+    /// Encapsulated logic for laying out text.
     /// </summary>
-    internal class TextLayout
+    public class TextLayout
     {
-        internal static TextLayout Default { get; set; } = new TextLayout();
+        public static TextLayout Default { get; set; } = new TextLayout();
 
         /// <summary>
         /// Generates the layout.
@@ -22,20 +23,90 @@ namespace SixLabors.Fonts
         /// <param name="text">The text.</param>
         /// <param name="options">The style.</param>
         /// <param name="output">The layout output.</param>
-        /// <returns>A collection of layout that describe all thats needed to measure or render a series of glyphs.</returns>
-        public void GenerateLayout(ReadOnlySpan<char> text, RendererOptions options, List<GlyphLayout> output)
+        /// <returns>
+        /// A collection of layout that describe all thats 
+        /// needed to measure or render a series of glyphs.
+        /// </returns>
+        public void GenerateLayout(
+            ReadOnlySpan<char> text, RendererOptions options, IList<GlyphLayout> output)
         {
-            var dpi = new Vector2(options.DpiX, options.DpiY);
+            var tmp = FontListPools.Char.Rent();
+            try
+            {
+                for (int i = 0; i < text.Length; i++)
+                    tmp.Add(text[i]);
+                GenerateLayout(tmp, options, output);
+            }
+            finally
+            {
+                FontListPools.Char.Return(tmp);
+            }
+        }
+
+        /// <summary>
+        /// Generates the layout.
+        /// </summary>
+        /// <param name="text">The text.</param>
+        /// <param name="options">The style.</param>
+        /// <param name="output">The layout output.</param>
+        /// <returns>
+        /// A collection of layout that describe all thats 
+        /// needed to measure or render a series of glyphs.
+        /// </returns>
+        public void GenerateLayout(
+            StringBuilder text, RendererOptions options, IList<GlyphLayout> output)
+        {
+            var tmp = FontListPools.Char.Rent();
+            try
+            {
+                for (int i = 0; i < text.Length; i++)
+                    tmp.Add(text[i]);
+                GenerateLayout(tmp, options, output);
+            }
+            finally
+            {
+                FontListPools.Char.Return(tmp);
+            }
+        }
+
+        /// <summary>
+        /// Generates the layout.
+        /// </summary>
+        /// <param name="text">The text.</param>
+        /// <param name="options">The style.</param>
+        /// <param name="output">The layout output.</param>
+        /// <returns>
+        /// A collection of layout that describe all thats 
+        /// needed to measure or render a series of glyphs.
+        /// </returns>
+        public void GenerateLayout(
+            char[] text, RendererOptions options, IList<GlyphLayout> output)
+        {
+            GenerateLayout((IReadOnlyList<char>)text, options, output);
+        }
+
+        /// <summary>
+        /// Generates the layout.
+        /// </summary>
+        /// <param name="text">The text.</param>
+        /// <param name="options">The style.</param>
+        /// <param name="output">The layout output.</param>
+        /// <returns>
+        /// A collection of layout that describe all thats 
+        /// needed to measure or render a series of glyphs.
+        /// </returns>
+        public void GenerateLayout(
+            IReadOnlyList<char> text, RendererOptions options, IList<GlyphLayout> output)
+        {
+            int count = text.Count;
+            Vector2 dpi = options.Dpi;
             Vector2 origin = options.Origin / dpi;
 
             float maxWidth = float.MaxValue;
             float originX = 0;
             if (options.WrappingWidth > 0)
             {
-                // trim trailing white spaces from the text
-                text = text.TrimEnd(null);
-
-                maxWidth = options.WrappingWidth / options.DpiX;
+                maxWidth = options.WrappingWidth / dpi.X;
 
                 switch (options.HorizontalAlignment)
                 {
@@ -54,10 +125,7 @@ namespace SixLabors.Fonts
                 }
             }
 
-            AppliedFontStyle spanStyle = options.GetStyle(0, text.Length);
-            if (output.Capacity < text.Length)
-                output.Capacity = text.Length;
-
+            AppliedFontStyle spanStyle = options.GetStyle(0, count);            
             float unscaledLineHeight = 0f;
             float lineHeight = 0f;
             float unscaledLineMaxAscender = 0f;
@@ -76,15 +144,17 @@ namespace SixLabors.Fonts
             bool startOfLine = true;
             float totalHeight = 0;
 
-            for (int i = 0; i < text.Length; i++)
+            for (int i = 0; i < count; i++)
             {
+                char c = text[i];
+
                 // four-byte characters are processed on the first char
-                if (char.IsLowSurrogate(text[i]))
+                if (char.IsLowSurrogate(c))
                     continue;
 
                 if (spanStyle.End < i)
                 {
-                    spanStyle = options.GetStyle(i, text.Length);
+                    spanStyle = options.GetStyle(i, count);
                     previousGlyph = null;
                 }
 
@@ -111,7 +181,7 @@ namespace SixLabors.Fonts
                     top = lineHeightOfFirstLine - lineMaxAscender;
                 }
 
-                if (options.WrappingWidth > 0 && char.IsWhiteSpace(text[i]))
+                if (options.WrappingWidth > 0 && char.IsWhiteSpace(c))
                 {
                     // keep a record of where to wrap text and ensure that no line starts with white space
                     for (int j = output.Count - 1; j >= 0; j--)
@@ -124,15 +194,16 @@ namespace SixLabors.Fonts
                     }
                 }
 
-                bool hasFourBytes = char.IsHighSurrogate(text[i]);
+                bool hasFourBytes = char.IsHighSurrogate(c);
                 int codePoint = hasFourBytes ?
-                    (i + 1 < text.Length ? char.ConvertToUtf32(text[i], text[i + 1]) : 0) : text[i];
+                    (i + 1 < count ? char.ConvertToUtf32(c, text[i + 1]) : 0) : c;
 
                 GlyphInstance glyph = spanStyle.Font.GetGlyph(codePoint);
                 float glyphWidth = (glyph.AdvanceWidth * spanStyle.PointSize) / scale;
                 float glyphHeight = (glyph.Height * spanStyle.PointSize) / scale;
+                var g = new Glyph(glyph, spanStyle.PointSize);
 
-                if (hasFourBytes || (text[i] != '\r' && text[i] != '\n' && text[i] != '\t' && text[i] != ' '))
+                if (hasFourBytes || (c != '\r' && c != '\n' && c != '\t' && c != ' '))
                 {
                     Vector2 glyphLocation = location;
                     if (spanStyle.ApplyKerning && previousGlyph != null)
@@ -146,7 +217,7 @@ namespace SixLabors.Fonts
                         location.X = glyphLocation.X;
                     }
 
-                    output.Add(new GlyphLayout(codePoint, new Glyph(glyph, spanStyle.PointSize), glyphLocation, glyphWidth, glyphHeight, lineHeight, startOfLine, false, false));
+                    output.Add(new GlyphLayout(codePoint, g, glyphLocation, glyphWidth, glyphHeight, lineHeight, startOfLine, false, false));
                     startOfLine = false;
 
                     // move forward the actual width of the glyph, we are retaining the baseline
@@ -172,12 +243,13 @@ namespace SixLabors.Fonts
                                     continue;
                                 }
 
-                                Vector2 currentLocation = currentLayout.Location;
-                                GlyphLayout newLayout = new GlyphLayout(
+                                Vector2 currentLoc = currentLayout.Location;
+                                var newLayout = new GlyphLayout(
                                     currentLayout.CodePoint, currentLayout.Glyph, 
-                                    new Vector2(currentLocation.X - wrappingOffset, currentLocation.Y + lineHeight),
+                                    new Vector2(currentLoc.X - wrappingOffset, currentLoc.Y + lineHeight),
                                     currentLayout.Width, currentLayout.Height,
-                                    currentLayout.LineHeight, startOfLine, currentLayout.IsWhiteSpace, currentLayout.IsControlCharacter);
+                                    currentLayout.LineHeight, startOfLine,
+                                    currentLayout.IsWhiteSpace, currentLayout.IsControlCharacter);
 
                                 startOfLine = false;
 
@@ -197,20 +269,20 @@ namespace SixLabors.Fonts
 
                     previousGlyph = glyph;
                 }
-                else if (text[i] == '\r')
+                else if (c == '\r')
                 {
                     // carriage return resets the XX coordinate to 0
                     location.X = 0;
                     previousGlyph = null;
                     startOfLine = true;
 
-                    output.Add(new GlyphLayout(codePoint, new Glyph(glyph, spanStyle.PointSize), location, 0, glyphHeight, lineHeight, startOfLine, true, true));
+                    output.Add(new GlyphLayout(codePoint, g, location, 0, glyphHeight, lineHeight, startOfLine, true, true));
                     startOfLine = false;
                 }
-                else if (text[i] == '\n')
+                else if (c == '\n')
                 {
                     // carriage return resets the XX coordinate to 0
-                    output.Add(new GlyphLayout(codePoint, new Glyph(glyph, spanStyle.PointSize), location, 0, glyphHeight, lineHeight, startOfLine, true, true));
+                    output.Add(new GlyphLayout(codePoint, g, location, 0, glyphHeight, lineHeight, startOfLine, true, true));
                     location.X = 0;
                     location.Y += lineHeight;
                     unscaledLineHeight = 0;
@@ -232,8 +304,8 @@ namespace SixLabors.Fonts
                         // if we are not going to tab atleast a glyph width add another tabstop to it ???
                         // should I be doing this?
                         finalWidth += tabStop;
-                    
-                    output.Add(new GlyphLayout(codePoint, new Glyph(glyph, spanStyle.PointSize), location, finalWidth, glyphHeight, lineHeight, startOfLine, true, false));
+
+                    output.Add(new GlyphLayout(codePoint, g, location, finalWidth, glyphHeight, lineHeight, startOfLine, true, false));
                     startOfLine = false;
 
                     // advance to a position > width away that
@@ -242,7 +314,7 @@ namespace SixLabors.Fonts
                 }
                 else if (text[i] == ' ')
                 {
-                    output.Add(new GlyphLayout(codePoint, new Glyph(glyph, spanStyle.PointSize), location, glyphWidth, glyphHeight, lineHeight, startOfLine, true, false));
+                    output.Add(new GlyphLayout(codePoint, g, location, glyphWidth, glyphHeight, lineHeight, startOfLine, true, false));
                     startOfLine = false;
                     location.X += glyphWidth;
                     previousGlyph = null;
@@ -262,7 +334,7 @@ namespace SixLabors.Fonts
                     offset += new Vector2(0, -totalHeight);
                     break;
 
-                //case VerticalAlignment.Top:
+                case VerticalAlignment.Top:
                 default:
                     // no change
                     break;
@@ -297,7 +369,7 @@ namespace SixLabors.Fonts
                             lineOffset = new Vector2(originX - (width / 2f), 0) + offset;
                             break;
 
-                        //case HorizontalAlignment.Left:
+                        case HorizontalAlignment.Left:
                         default:
                             lineOffset = new Vector2(originX, 0) + offset;
                             break;
@@ -307,131 +379,6 @@ namespace SixLabors.Fonts
                 // TODO calculate an offset from the 'origin' based on TextAlignment for each line
                 output[i] = new GlyphLayout(glyphLayout.CodePoint, glyphLayout.Glyph, glyphLayout.Location + lineOffset + origin, glyphLayout.Width, glyphLayout.Height, glyphLayout.LineHeight, glyphLayout.StartOfLine, glyphLayout.IsWhiteSpace, glyphLayout.IsControlCharacter);
             }
-        }
-    }
-
-    /// <summary>
-    /// A glyphs layout and location
-    /// </summary>
-    internal readonly struct GlyphLayout
-    {
-        internal GlyphLayout(int codePoint, Glyph glyph, Vector2 location, float width, float height, float lineHeight, bool startOfLine, bool isWhiteSpace, bool isControlCharacter)
-        {
-            this.LineHeight = lineHeight;
-            this.CodePoint = codePoint;
-            this.Glyph = glyph;
-            this.Location = location;
-            this.Width = width;
-            this.Height = height;
-            this.StartOfLine = startOfLine;
-            this.IsWhiteSpace = isWhiteSpace;
-            this.IsControlCharacter = isControlCharacter;
-        }
-
-        /// <summary>
-        /// Gets a value indicating whether gets the glyphe represents a whitespace character.
-        /// </summary>
-        /// <value>
-        /// The bounds.
-        /// </value>
-        public bool IsWhiteSpace { get; }
-
-        /// <summary>
-        /// Gets the glyph.
-        /// </summary>
-        /// <value>
-        /// The glyph.
-        /// </value>
-        public Glyph Glyph { get; }
-
-        /// <summary>
-        /// Gets the location.
-        /// </summary>
-        /// <value>
-        /// The location.
-        /// </value>
-        public Vector2 Location { get; }
-
-        /// <summary>
-        /// Gets the width.
-        /// </summary>
-        /// <value>
-        /// The width.
-        /// </value>
-        public float Width { get; }
-
-        /// <summary>
-        /// Gets the height.
-        /// </summary>
-        /// <value>
-        /// The height.
-        /// </value>
-        public float Height { get; }
-
-        /// <summary>
-        /// Gets a value indicating whether this glyph is the first glyph on a new line.
-        /// </summary>
-        public bool StartOfLine { get; }
-
-        /// <summary>
-        /// Gets the Unicode code point of the character.
-        /// </summary>
-        public int CodePoint { get; }
-
-        public float LineHeight { get; }
-
-        public bool IsControlCharacter { get; }
-
-        internal RectangleF BoundingBox(Vector2 dpi)
-        {
-            RectangleF box = this.Glyph.BoundingBox(this.Location * dpi, dpi);
-
-            if (this.IsWhiteSpace)
-            {
-                box.Width = this.Width * dpi.X;
-            }
-
-            return box;
-        }
-
-        public override string ToString()
-        {
-            var sb = new StringBuilder();
-            if (this.StartOfLine)
-            {
-                sb.Append('@');
-                sb.Append(' ');
-            }
-
-            if (this.IsWhiteSpace)
-            {
-                sb.Append('!');
-            }
-
-            sb.Append('\'');
-            switch (this.CodePoint)
-            {
-                case '\t': sb.Append("\\t"); break;
-                case '\n': sb.Append("\\n"); break;
-                case '\r': sb.Append("\\r"); break;
-                case ' ': sb.Append(" "); break;
-                default:
-                    sb.Append(char.ConvertFromUtf32(this.CodePoint));
-                    break;
-            }
-
-            sb.Append('\'');
-            sb.Append(' ');
-
-            sb.Append(this.Location.X);
-            sb.Append(',');
-            sb.Append(this.Location.Y);
-            sb.Append(' ');
-            sb.Append(this.Width);
-            sb.Append('x');
-            sb.Append(this.Height);
-
-            return sb.ToString();
         }
     }
 }

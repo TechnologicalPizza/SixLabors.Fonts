@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
+using SixLabors.Fonts.Utilities;
 using SixLabors.Primitives;
 
 namespace SixLabors.Fonts
@@ -167,7 +168,7 @@ namespace SixLabors.Fonts
         {
             private readonly TextLayout layoutEngine;
 
-            internal TextMeasurerInt(TextLayout layoutEngine)
+            public TextMeasurerInt(TextLayout layoutEngine)
             {
                 this.layoutEngine = layoutEngine;
             }
@@ -175,12 +176,11 @@ namespace SixLabors.Fonts
             /// <summary>
             /// Initializes a new instance of the <see cref="TextMeasurerInt"/> class.
             /// </summary>
-            internal TextMeasurerInt()
-            : this(TextLayout.Default)
+            public TextMeasurerInt() : this(TextLayout.Default)
             {
             }
 
-            internal static TextMeasurerInt Default { get; set; } = new TextMeasurerInt();
+            public static TextMeasurerInt Default { get; set; } = new TextMeasurerInt();
 
             /// <summary>
             /// Measures the text.
@@ -191,10 +191,16 @@ namespace SixLabors.Fonts
             internal RectangleF MeasureBounds(ReadOnlySpan<char> text, RendererOptions options)
             {
                 // TODO: add pooling
-                var glyphsToRender = new List<GlyphLayout>();
-                this.layoutEngine.GenerateLayout(text, options, glyphsToRender);
-
-                return GetBounds(glyphsToRender, new Vector2(options.DpiX, options.DpiY));
+                var glyphsToRender = FontListPools.Layout.Rent();
+                try
+                {
+                    this.layoutEngine.GenerateLayout(text, options, glyphsToRender);
+                    return GetBounds(glyphsToRender, options.Dpi);
+                }
+                finally
+                {
+                    FontListPools.Layout.Return(glyphsToRender);
+                }
             }
 
             /// <summary>
@@ -206,11 +212,16 @@ namespace SixLabors.Fonts
             /// <returns>The size of the text if it was to be rendered.</returns>
             internal bool TryMeasureCharacterBounds(ReadOnlySpan<char> text, RendererOptions options, out GlyphMetric[] characterBounds)
             {
-                // TODO: add pooling
-                var glyphsToRender = new List<GlyphLayout>();
-                this.layoutEngine.GenerateLayout(text, options, glyphsToRender);
-
-                return TryGetCharacterBounds(glyphsToRender, new Vector2(options.DpiX, options.DpiY), out characterBounds);
+                var glyphsToRender = FontListPools.Layout.Rent();
+                try
+                {
+                    this.layoutEngine.GenerateLayout(text, options, glyphsToRender);
+                    return TryGetCharacterBounds(glyphsToRender, options.Dpi, out characterBounds);
+                }
+                finally
+                {
+                    FontListPools.Layout.Return(glyphsToRender);
+                }
             }
 
             /// <summary>
@@ -222,10 +233,16 @@ namespace SixLabors.Fonts
             internal SizeF Measure(ReadOnlySpan<char> text, RendererOptions options)
             {
                 // TODO: add pooling
-                var glyphsToRender = new List<GlyphLayout>();
-                this.layoutEngine.GenerateLayout(text, options, glyphsToRender);
-
-                return GetSize(glyphsToRender, new Vector2(options.DpiX, options.DpiY));
+                var glyphsToRender = FontListPools.Layout.Rent();
+                try
+                {
+                    this.layoutEngine.GenerateLayout(text, options, glyphsToRender);
+                    return GetSize(glyphsToRender, options.Dpi);
+                }
+                finally
+                {
+                    FontListPools.Layout.Return(glyphsToRender);
+                }
             }
         }
     }

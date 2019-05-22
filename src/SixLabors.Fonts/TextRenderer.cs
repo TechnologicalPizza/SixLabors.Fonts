@@ -4,6 +4,7 @@
 using System;
 using System.Collections.Generic;
 using System.Numerics;
+using SixLabors.Fonts.Utilities;
 using SixLabors.Primitives;
 
 namespace SixLabors.Fonts
@@ -25,30 +26,29 @@ namespace SixLabors.Fonts
             RenderText(renderer, text, options, TextLayout.Default);
         }
 
-        static List<GlyphLayout> lst = new List<GlyphLayout>();
-
         internal static void RenderText(
             IGlyphRenderer renderer, ReadOnlySpan<char> text, RendererOptions options, TextLayout layoutEngine)
         {
-            //var glyphsToRender = new List<GlyphLayout>();
-            var glyphsToRender = lst;
-            glyphsToRender.Clear();
-            layoutEngine.GenerateLayout(text, options, glyphsToRender);
-
-            Vector2 dpi = new Vector2(options.DpiX, options.DpiY);
-            RectangleF rect = TextMeasurer.GetBounds(glyphsToRender, dpi);
-
-            renderer.BeginText(rect);
-
-            foreach (GlyphLayout g in glyphsToRender)
+            var glyphsToRender = FontListPools.Layout.Rent();
+            try
             {
-                if (g.IsWhiteSpace)
-                    continue;
-                
-                g.Glyph.RenderTo(renderer, g.Location, options.DpiX, options.DpiY, g.LineHeight);
-            }
+                layoutEngine.GenerateLayout(text, options, glyphsToRender);
+                RectangleF rect = TextMeasurer.GetBounds(glyphsToRender, options.Dpi);
 
-            renderer.EndText();
+                renderer.BeginText(rect);
+                foreach (GlyphLayout g in glyphsToRender)
+                {
+                    if (g.IsWhiteSpace)
+                        continue;
+
+                    g.Glyph.RenderTo(renderer, g.Location, options.Dpi, g.LineHeight);
+                }
+                renderer.EndText();
+            }
+            finally
+            {
+                FontListPools.Layout.Return(glyphsToRender);
+            }
         }
     }
 }

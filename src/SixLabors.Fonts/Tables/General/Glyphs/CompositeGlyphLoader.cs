@@ -64,71 +64,78 @@ namespace SixLabors.Fonts.Tables.General.Glyphs
         public static CompositeGlyphLoader LoadCompositeGlyph(BinaryReader reader, in Bounds bounds)
         {
             var result = FontListPools.Composite.Rent();
-            CompositeFlags flags;
-            ushort glyphIndex;
-            do
+            try
             {
-                flags = (CompositeFlags)reader.ReadUInt16();
-                glyphIndex = reader.ReadUInt16();
+                CompositeFlags flags;
+                ushort glyphIndex;
+                do
+                {
+                    flags = (CompositeFlags)reader.ReadUInt16();
+                    glyphIndex = reader.ReadUInt16();
 
-                short arg1;
-                short arg2;
-                if (flags.HasFlags(CompositeFlags.ArgsAreWords))
-                {
-                    arg1 = reader.ReadInt16();
-                    arg2 = reader.ReadInt16();
-                }
-                else
-                {
-                    arg1 = reader.ReadByte();
-                    arg2 = reader.ReadByte();
-                }
+                    short arg1;
+                    short arg2;
+                    if (flags.HasFlags(CompositeFlags.ArgsAreWords))
+                    {
+                        arg1 = reader.ReadInt16();
+                        arg2 = reader.ReadInt16();
+                    }
+                    else
+                    {
+                        arg1 = reader.ReadByte();
+                        arg2 = reader.ReadByte();
+                    }
 
-                short dx;
-                short dy;
-                if (flags.HasFlags(CompositeFlags.ArgsAreXYValues))
-                {
-                    dx = arg1;
-                    dy = arg2;
-                }
-                else
-                {
-                    // args are points to be matched
-                    // TODO: Implement
-                    dx = 0;
-                    dy = 0;
-                }
+                    short dx;
+                    short dy;
+                    if (flags.HasFlags(CompositeFlags.ArgsAreXYValues))
+                    {
+                        dx = arg1;
+                        dy = arg2;
+                    }
+                    else
+                    {
+                        // args are points to be matched
+                        // TODO: Implement
+                        dx = 0;
+                        dy = 0;
+                    }
 
-                Matrix3x2 transform = Matrix3x2.Identity;
-                transform.Translation = new Vector2(dx, dy);
-                if (flags.HasFlags(CompositeFlags.WeHaveAScale))
-                {
-                    float scale = reader.ReadF2dot14(); // Format 2.14
-                    transform.M11 = scale;
-                    transform.M21 = scale;
-                }
-                else if (flags.HasFlags(CompositeFlags.WeHaveXAndYScale))
-                {
-                    transform.M11 = reader.ReadF2dot14();
-                    transform.M22 = reader.ReadF2dot14();
-                }
-                else if (flags.HasFlags(CompositeFlags.WeHaveATwoByTwo))
-                {
-                    transform.M11 = reader.ReadF2dot14();
-                    transform.M12 = reader.ReadF2dot14();
-                    transform.M21 = reader.ReadF2dot14();
-                    transform.M22 = reader.ReadF2dot14();
-                }
+                    Matrix3x2 transform = Matrix3x2.Identity;
+                    transform.Translation = new Vector2(dx, dy);
+                    if (flags.HasFlags(CompositeFlags.WeHaveAScale))
+                    {
+                        float scale = reader.ReadF2dot14(); // Format 2.14
+                        transform.M11 = scale;
+                        transform.M21 = scale;
+                    }
+                    else if (flags.HasFlags(CompositeFlags.WeHaveXAndYScale))
+                    {
+                        transform.M11 = reader.ReadF2dot14();
+                        transform.M22 = reader.ReadF2dot14();
+                    }
+                    else if (flags.HasFlags(CompositeFlags.WeHaveATwoByTwo))
+                    {
+                        transform.M11 = reader.ReadF2dot14();
+                        transform.M12 = reader.ReadF2dot14();
+                        transform.M21 = reader.ReadF2dot14();
+                        transform.M22 = reader.ReadF2dot14();
+                    }
 
-                result.Add(new Composite(glyphIndex, transform));
+                    result.Add(new Composite(glyphIndex, transform));
+                }
+                while (flags.HasFlags(CompositeFlags.MoreComponents));
+
+                // TODO: deal with instructions
+                if (flags.HasFlags(CompositeFlags.WeHaveInstructions))
+                {
+                }
             }
-            while (flags.HasFlags(CompositeFlags.MoreComponents));
-
-            // TODO: deal with instructions
-            if (flags.HasFlags(CompositeFlags.WeHaveInstructions))
+            catch
             {
+                FontListPools.Composite.Return(result);
+                throw;
             }
-
             return new CompositeGlyphLoader(result, bounds);
         }
 

@@ -1,12 +1,13 @@
 ﻿// Copyright (c) Six Labors and contributors.
 // Licensed under the Apache License, Version 2.0.
 
+using System.Numerics;
 using SixLabors.Primitives;
 
 namespace SixLabors.Fonts
 {
     /// <summary>
-    /// The font style to render onto a peice of text.
+    /// The font style to use while rendering text.
     /// </summary>
     public sealed class RendererOptions
     {
@@ -14,8 +15,7 @@ namespace SixLabors.Fonts
         /// Initializes a new instance of the <see cref="RendererOptions"/> class.
         /// </summary>
         /// <param name="font">The font.</param>
-        public RendererOptions(Font font)
-            : this(font, 72, 72)
+        public RendererOptions(Font font) : this(font, 72, 72)
         {
             this.Font = font;
         }
@@ -25,8 +25,7 @@ namespace SixLabors.Fonts
         /// </summary>
         /// <param name="font">The font.</param>
         /// <param name="dpi">The dpi.</param>
-        public RendererOptions(Font font, float dpi)
-            : this(font, dpi, dpi)
+        public RendererOptions(Font font, float dpi) : this(font, dpi, dpi)
         {
             this.Font = font;
         }
@@ -74,8 +73,7 @@ namespace SixLabors.Fonts
         {
             this.Origin = origin;
             this.Font = font;
-            this.DpiX = dpiX;
-            this.DpiY = dpiY;
+            this.Dpi = new Vector2(dpiX, dpiY);
         }
 
         /// <summary>
@@ -103,14 +101,9 @@ namespace SixLabors.Fonts
         public bool ApplyKerning { get; set; } = true;
 
         /// <summary>
-        /// Gets or sets the the current X DPI to render/measure the text at.
+        /// Gets or sets the the current DPI to render/measure the text at.
         /// </summary>
-        public float DpiX { get; set; }
-
-        /// <summary>
-        /// Gets or sets the the current Ys DPI to render/measure the text at.
-        /// </summary>
-        public float DpiY { get; set; }
+        public Vector2 Dpi { get; set; }
 
         /// <summary>
         /// Gets or sets the width relative to the current DPI at which text will automatically wrap onto a newline
